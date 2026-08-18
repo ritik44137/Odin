@@ -63,7 +63,7 @@ A task is identified by one slug, chosen when the draft is created and never cha
 - `tasks/<slug>/` — the bundle root, containing exactly the files that get zipped
 - `zip/<slug>.zip` — the finished archive, and nothing else
 
-The slug must equal the draft's `workingSlug` and `[metadata] working_slug` in `task.toml`. Every script accepts `--slug` and resolves these paths itself. `LEDGER.json` sits at the repository root because it belongs to no single task.
+The slug must equal the draft's `workingSlug` and `[metadata] working_slug` in `task.toml`. Every script accepts `--slug` and resolves these paths itself. `LEDGER.json` sits at the repository root because it belongs to no single task; it is local and gitignored.
 
 Never place notes or planning files inside `tasks/<slug>/`: that directory is shipped to the grader.
 

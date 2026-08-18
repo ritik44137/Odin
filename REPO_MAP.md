@@ -16,7 +16,7 @@
 ├── plans/                              # <slug>.md — bundle plans
 ├── tasks/                              # <slug>/ — bundle roots, exactly what gets zipped
 ├── zip/                                # <slug>.zip — finished archives, and nothing else
-├── LEDGER.json                         # submissions and bundle hashes (created on first use)
+├── LEDGER.json                         # local: submissions and hashes (gitignored)
 ├── docs/
 │   ├── odyssey-repo-layout.md          # the slug contract and mandatory sequence
 │   ├── odyssey-authoring-loop.md       # the operating loop, end to end

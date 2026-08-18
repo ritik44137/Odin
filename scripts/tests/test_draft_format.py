@@ -23,7 +23,13 @@ def _load(name: str):
 odyssey_draft = _load("odyssey_draft")
 
 TEMPLATE = REPO_ROOT / "templates" / "odyssey-task-draft.template.md"
-TASK_DRAFT = REPO_ROOT / "drafts" / "three-way-merge-engine.md"
+
+
+def _local_drafts():
+    drafts_dir = REPO_ROOT / "drafts"
+    if not drafts_dir.is_dir():
+        return []
+    return sorted(path for path in drafts_dir.glob("*.md") if path.is_file())
 
 
 class TestMarkdownDraftCodec:
@@ -85,18 +91,19 @@ class TestMarkdownDraftCodec:
         assert draft["resourceEstimate"]["agentTimeoutSec"] == 7200
         assert draft["networkRequirements"]["mode"] == "none"
 
-    def test_three_way_merge_draft_validates(self):
-        if not TASK_DRAFT.is_file():
-            pytest.skip("task draft not present in this checkout")
-        draft = odyssey_draft.load(TASK_DRAFT)
-        source = TASK_DRAFT.read_text(encoding="utf-8")
-        result = validator.validate_draft(draft, validator.load_schema(), source_text=source)
-        assert result.errors == [], result.errors
+    def test_local_drafts_validate_if_present(self):
+        drafts = _local_drafts()
+        if not drafts:
+            pytest.skip("no local drafts in this checkout")
+        for path in drafts:
+            draft = odyssey_draft.load(path)
+            source = path.read_text(encoding="utf-8")
+            result = validator.validate_draft(draft, validator.load_schema(), source_text=source)
+            assert result.errors == [], result.errors
 
     def test_platform_draft_files_are_keyboard_ascii(self):
         paths = [TEMPLATE, *sorted((REPO_ROOT / "examples" / "good").glob("*.md"))]
-        if TASK_DRAFT.is_file():
-            paths.append(TASK_DRAFT)
+        paths.extend(_local_drafts())
         paths.append(REPO_ROOT / "examples" / "reference-bundle" / "draft.md")
         for path in paths:
             text = path.read_text(encoding="utf-8")

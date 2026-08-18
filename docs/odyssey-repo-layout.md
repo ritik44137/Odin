@@ -15,8 +15,9 @@ zip/<slug>.zip         the archive that gets uploaded, and nothing else
 
 Each directory holds exactly one kind of artifact. `drafts/` never contains bundle
 files, `tasks/` never contains drafts or archives, and `zip/` contains only finished
-archives. Bookkeeping that belongs to no single task — the submission ledger — sits
-at the repository root as `LEDGER.json`.
+archives. Bookkeeping that belongs to no single task -- the submission ledger -- sits
+at the repository root as `LEDGER.json`. It is created on first use and is
+gitignored with the rest of the local task work.
 
 Every script accepts `--slug`, resolves these paths itself, and refuses a slug that
 is not lowercase kebab-case of 3 to 80 characters. Nothing needs a path typed by

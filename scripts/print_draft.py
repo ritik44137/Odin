@@ -33,7 +33,7 @@ def main() -> int:
                 continue
             print(f"  {heading:28}  --field {field}")
         if not args.field:
-            print("\nExample: python3 scripts/print_draft.py --slug three-way-merge-engine --field objective")
+            print("\nExample: python3 scripts/print_draft.py --slug <slug> --field objective")
         return 0 if args.list or (args.slug is None and args.draft is None) else 0
 
     draft_file = args.draft

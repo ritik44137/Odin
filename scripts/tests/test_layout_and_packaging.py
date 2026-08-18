@@ -167,3 +167,30 @@ class TestScaffoldAndRefusal:
         result = validator.validate_draft(template, validator.load_schema())
         assert result.errors, "an empty scaffold draft must not validate"
         assert any("objective" in e for e in result.errors)
+
+
+class TestPublishedTreeOmitsLocalWork:
+    def test_committed_files_do_not_name_local_task_slugs(self):
+        drafts_dir = REPO_ROOT / "drafts"
+        local_slugs = sorted(path.stem for path in drafts_dir.glob("*.md") if path.is_file())
+        if not local_slugs:
+            pytest.skip("no local drafts in this checkout")
+        listed = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+        )
+        tracked = [entry.decode("utf-8") for entry in listed.stdout.split(b"\0") if entry]
+        if not tracked:
+            pytest.skip("not a git checkout")
+        for rel in tracked:
+            path = REPO_ROOT / rel
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            for slug in local_slugs:
+                assert slug not in text, f"{rel} names local task {slug}"

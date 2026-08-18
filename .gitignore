@@ -1,4 +1,6 @@
-# Task artifacts stay local. The ledger records submitted bundle hashes.
+# Local task work. Drafts, plans, bundles, ZIPs, and the submission ledger
+# stay on the authoring machine and are never part of the published tree.
+LEDGER.json
 drafts/*
 !drafts/.gitkeep
 plans/*

@@ -9,27 +9,18 @@ contract.
 
 ## Current status
 
-This is the Alpha authoring repo: the rules, commands, schema, templates,
-examples, and local funnel scripts are in place and are the source of truth for
-how tasks are written.
+This is the Alpha authoring repo. The rules, commands, schema, templates,
+examples, and local funnel scripts are in place and are the source of truth
+for how tasks are written.
 
-| Item | State |
-|---|---|
-| Authoring system (rules, scripts, templates, examples) | Ready to use |
-| In-progress task | `three-way-merge-engine` |
-| Ledger status | `drafting` |
-| Collection / task / verifier family | Library clone / `feature_development` / `programmatic` |
-| Packaged ZIP | None in `zip/` yet |
+Git holds the authoring machinery only. Local task work stays on the machine
+that creates it and is gitignored:
 
-The current task is a Go library clone: implement `textmerge` (`Diff`, `Patch`,
-`Merge`) against a frozen spec. A draft, bundle plan, and `tasks/three-way-merge-engine/`
-tree exist on disk. Those paths are gitignored on purpose (`drafts/`, `plans/`,
-`tasks/`, `zip/`) so solutions and held-out tests stay local. `LEDGER.json` is
-tracked and records the slug, status, and last bundle hash.
+- `drafts/`, `plans/`, `tasks/`, `zip/` -- one slug's artifacts
+- `LEDGER.json` -- submission status and bundle hashes, created on first use
 
-What is in git is the authoring machinery plus the ledger. Clone this repo to
-get the system; keep working copies of drafts, plans, and bundles on the
-machine that authors them.
+Clone this repo to get the system. Do not commit drafts, plans, bundles, or
+ledger entries.
 
 Verifier convention now matches Harbor: `tests/test.sh` must write
 `/logs/verifier/reward.txt` (or `reward.json`) on every exit path, and also
@@ -109,8 +100,8 @@ tasks/<slug>/          the bundle root: exactly the files that get zipped
 zip/<slug>.zip         the archive that gets uploaded, and nothing else
 ```
 
-Every script takes `--slug` and resolves those paths. `LEDGER.json` sits at the
-repo root because it belongs to no single task.
+Every script takes `--slug` and resolves those paths. `LEDGER.json` is created
+locally at the repo root (gitignored) because it belongs to no single task.
 
 ## Why local gates matter
 

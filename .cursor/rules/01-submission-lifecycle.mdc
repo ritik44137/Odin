@@ -1,0 +1,93 @@
+---
+description: Odyssey submission lifecycle and stage-aware authoring behavior
+alwaysApply: true
+---
+
+# Lifecycle model
+
+Odyssey submission is a **two-phase flow**:
+
+1. author and revise the draft
+2. upload the bundle through a quarantined signed URL
+
+A task is not manually submitted by pressing a final button after inspection. When inspection marks the bundle safe, the platform atomically snapshots the draft plus safe bundle into a submission and starts the automated funnel.
+
+# Stage sequence
+
+Cursor should reason about tasks in this order:
+
+1. idea formation
+2. draft authoring
+3. bundle design
+4. bundle upload
+5. quarantine and inspection
+6. automated funnel
+7. human review
+8. revision or approval
+
+# Stage-specific guidance
+
+## Draft authoring
+
+During draft authoring, ensure every field is coherent on its own. Reviewers should be able to understand and trust the task from the draft alone.
+
+## Bundle design
+
+The future ZIP must be planned before implementation. The intended `task.toml`, `instruction.md`, `environment/Dockerfile`, `tests/test.sh`, and `solution/solve.sh` should already be implied by the draft.
+
+## Inspection awareness
+
+Bundle paths and contents are checked before use. Unsafe paths, malformed `task.toml`, missing required files, or internal inconsistencies should be treated as blocking issues before upload.
+
+## Automated funnel awareness
+
+The task will pass through structure, similarity, oracle and nop, quality, difficulty, and synthesis. Drafts should be written with those stages in mind, especially oracle solvability, nop floor, anti-gaming, and realistic difficulty.
+
+## Human review awareness
+
+Human review is not a rubber stamp after automation. Reviewers still evaluate realism, novelty, robustness of verification, and whether the task belongs honestly in its collection family.
+
+# Consequences of lifecycle facts
+
+- Because resubmitting byte-identical bundles is blocked by content hash, revisions must be substantive.
+- Because near-duplicates are caught later by similarity, novelty must be designed in at the idea stage.
+- Because a safe bundle is auto-submitted after inspection, draft and bundle consistency must be correct before upload.
+- Because the platform distinguishes verdict failures from infra failures, task authors should optimize for deterministic reproducibility rather than hoping flaky behavior passes.
+
+# Repository layout and the slug contract
+
+A task is identified by one slug, chosen when the draft is created and never changed. It names the task in four places:
+
+- `drafts/<slug>.md` — the draft, and nothing else
+- `plans/<slug>.md` — the pre-implementation bundle plan
+- `tasks/<slug>/` — the bundle root, containing exactly the files that get zipped
+- `zip/<slug>.zip` — the finished archive, and nothing else
+
+The slug must equal the draft's `workingSlug` and `[metadata] working_slug` in `task.toml`. Every script accepts `--slug` and resolves these paths itself. `LEDGER.json` sits at the repository root because it belongs to no single task.
+
+Never place notes or planning files inside `tasks/<slug>/`: that directory is shipped to the grader.
+
+# Mandatory creation sequence
+
+Follow every step, in order, every time. `docs/odyssey-repo-layout.md` is the full version.
+
+1. normalize the idea and classify it
+2. choose the slug
+3. `scripts/new_task.py --slug <slug>`
+4. write `drafts/<slug>.md` to the draft authoring standard
+5. `scripts/check_novelty.py --slug <slug>`
+6. `scripts/validate_odyssey_task.py --slug <slug>`
+7. fill `plans/<slug>.md`
+8. implement `tasks/<slug>/`
+9. `scripts/preflight.sh --slug <slug> --with-oracle`
+10. prove a visible-only patch still fails
+11. `scripts/package_task.py --slug <slug> --with-oracle`
+12. `scripts/ledger.py add --slug <slug>`, then record the verdict when it arrives
+
+Everything must be verified before the archive is written. `package_task.py` enforces this: it runs every gate first, writes `zip/<slug>.zip` only if they all pass, then validates the archive and deletes it if that fails.
+
+# Cursor operating rule
+
+When helping author a task, always ask internally: what would fail first in the lifecycle if this were uploaded today? Then improve the task at the earliest failing stage, not the latest one.
+
+Never report a task as ready on the strength of a gate that did not run. Quote real command output, and treat a skipped check as unknown rather than as passing.

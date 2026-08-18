@@ -1,0 +1,60 @@
+---
+description: Odyssey repository overview, terminology, and global authoring intent
+alwaysApply: true
+---
+
+# Purpose
+
+This repository exists to help author **Odyssey-compliant software-engineering tasks**. Cursor must treat the repository as a task-authoring system, not as generic documentation.
+
+# Primary outcome
+
+Given a raw task idea, produce:
+
+1. a strong Odyssey draft with all required fields completed
+2. a bundle plan that matches the draft and can be implemented as a valid Terminal-Bench / Harbor task
+3. a validation pass that catches structure, consistency, and quality problems before submission
+
+# Core terms
+
+- **Draft**: the structured metadata submitted first and revised while the bundle is being built
+- **Bundle**: the single ZIP archive containing the task environment, verifier, and reference solution
+- **Oracle**: the reference solution run that must achieve full or near-full reward
+- **NOP**: the untouched starting state, which must remain near the floor
+- **Visible verifier**: the public checks that help the agent aim correctly
+- **Hidden verifier**: the held-out grading logic and cases that prevent overfitting
+
+# Non-negotiable principles
+
+- The task must represent real software-engineering work, not a toy puzzle.
+- The reference solution must solve the task completely.
+- The verifier must measure the real objective, not a weak proxy.
+- Anti-gaming analysis is mandatory, not optional.
+- Resource and network declarations must be internally consistent across draft and bundle.
+- A task that merely passes deterministic structure checks is not done; it must also be review-worthy.
+
+# How Cursor should behave in this repo
+
+When given a task idea, Cursor should:
+
+- classify the idea into the closest collection family and task family
+- turn vague goals into concrete, objectively verifiable deliverables
+- surface missing assumptions instead of silently inventing them
+- produce validation-ready artifacts using the local schema and templates
+- check for likely rejection reasons before declaring the task ready
+
+# What Cursor should avoid
+
+Cursor must not:
+
+- produce underspecified objectives
+- rely on open internet access unless explicitly justified and allowlisted
+- create a verifier that can be passed by hard-coding obvious outputs
+- ignore the visible/hidden verifier split
+- request resources higher than the declared Odyssey sandbox allows
+- treat similarity avoidance as mere renaming of an old task
+- write draft or instruction text that cannot be typed on a standard keyboard
+
+# Authoring philosophy
+
+Strong Odyssey tasks are difficult because they require real engineering reasoning, careful implementation, and robust objective grading. They are not difficult because instructions are vague, the environment is broken, or success conditions are hidden from the author.

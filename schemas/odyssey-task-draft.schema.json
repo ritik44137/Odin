@@ -1,0 +1,221 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.local/schemas/odyssey-task-draft.schema.json",
+    "title": "Odyssey Task Draft",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "title",
+      "workingSlug",
+      "collectionFamily",
+      "taskFamily",
+      "verifierFamily",
+      "objective",
+      "motivation",
+      "difficultyExplanation",
+      "expertTimeEstimateHours",
+      "environmentSummary",
+      "resourceEstimate",
+      "networkRequirements",
+      "oracleStrategy",
+      "verificationStrategy",
+      "binarySuccessCondition",
+      "partialScoreStrategy",
+      "anticipatedExploits"
+    ],
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 200
+      },
+      "workingSlug": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "collectionFamily": {
+        "type": "string",
+        "enum": [
+          "Library clone",
+          "Product clone",
+          "ML engineering",
+          "Algorithmic optimization"
+        ]
+      },
+      "taskFamily": {
+        "type": "string",
+        "enum": [
+          "feature_development",
+          "debugging",
+          "refactoring",
+          "performance",
+          "systems_integration",
+          "other"
+        ]
+      },
+      "verifierFamily": {
+        "type": "string",
+        "enum": [
+          "programmatic",
+          "optimization",
+          "ml_artifact",
+          "custom"
+        ]
+      },
+      "objective": {
+        "type": "string",
+        "minLength": 40,
+        "maxLength": 20000
+      },
+      "motivation": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 10000
+      },
+      "difficultyExplanation": {
+        "type": "string",
+        "minLength": 40,
+        "maxLength": 20000
+      },
+      "expertTimeEstimateHours": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "environmentSummary": {
+        "type": "string",
+        "minLength": 40,
+        "maxLength": 20000
+      },
+      "resourceEstimate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cpuMillis",
+          "memoryMb",
+          "storageMb",
+          "gpuCount",
+          "agentTimeoutSec",
+          "verifierTimeoutSec"
+        ],
+        "properties": {
+          "cpuMillis": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 64000
+          },
+          "memoryMb": {
+            "type": "integer",
+            "minimum": 128,
+            "maximum": 262144
+          },
+          "storageMb": {
+            "type": "integer",
+            "minimum": 128,
+            "maximum": 1048576
+          },
+          "gpuCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "agentTimeoutSec": {
+            "type": "integer",
+            "minimum": 7200,
+            "maximum": 86400
+          },
+          "verifierTimeoutSec": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 86400
+          }
+        }
+      },
+      "networkRequirements": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode",
+          "justification",
+          "hosts"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "allowlist"
+            ]
+          },
+          "justification": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "hosts": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "mode": { "const": "none" } }
+            },
+            "then": {
+              "properties": {
+                "hosts": { "maxItems": 0 }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "mode": { "const": "allowlist" } }
+            },
+            "then": {
+              "properties": {
+                "hosts": { "minItems": 1 },
+                "justification": { "minLength": 10 }
+              }
+            }
+          }
+        ]
+      },
+      "oracleStrategy": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 20000
+      },
+      "verificationStrategy": {
+        "type": "string",
+        "minLength": 40,
+        "maxLength": 20000
+      },
+      "binarySuccessCondition": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 10000
+      },
+      "partialScoreStrategy": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 10000
+      },
+      "anticipatedExploits": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 20000
+      },
+      "notes": {
+        "type": "string",
+        "maxLength": 20000
+      }
+    }
+  }
+  

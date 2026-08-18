@@ -1,0 +1,103 @@
+---
+description: Odyssey task bundle structure, required files, and consistency checks
+alwaysApply: true
+---
+
+# Bundle contract
+
+An Odyssey task bundle is a **single ZIP archive** containing a Terminal-Bench / Harbor style task layout. The required paths are exact.
+
+# Required paths
+
+The bundle must contain all of the following:
+
+- `task.toml`
+- `instruction.md`
+- `environment/Dockerfile`
+- `tests/test.sh`
+- `solution/solve.sh`
+
+Treat these names as canonical, not illustrative.
+
+# Expected responsibilities
+
+## task.toml
+
+Must be valid TOML and declare the task through `[metadata]`, `[verifier]`, `[agent]`, and `[environment]` sections.
+
+## instruction.md
+
+Must contain substantive instructions for the agent, not a placeholder. The
+text must be keyboard-ASCII only, matching the draft paste rule: no arrows,
+superscripts, or typographic dashes.
+
+## environment/Dockerfile
+
+Builds the runtime image and prepares `/app`. Dependencies should be baked into the image rather than fetched during sealed rollout unless the relevant phase explicitly permits that network use.
+
+## tests/test.sh
+
+This is the canonical verifier entrypoint. The grader runs this exact file.
+
+## solution/solve.sh
+
+This is the canonical reference-solution entrypoint. The oracle runs this exact file.
+
+# Network consistency rules
+
+- `[environment] network_mode` describes image build behavior, which is not gated: a build that fetches packages is normal.
+- `[agent] network_mode` governs rollout, the one phase the network policy governs, and must align with the draft's `networkRequirements`. `none` and `allowlist` are admitted; `open` is refused.
+- `[verifier] network_mode` governs grading. Prefer `none`, because sealed grading is what keeps a verdict deterministic.
+- If the draft argues internet access is required, `[agent] network_mode` must be explicitly set and must match the draft posture.
+- If the draft requests allowlisted hosts but the bundle seals rollout as `none`, the task is inconsistent and should be rejected locally before upload.
+
+# Resource consistency rules
+
+The draft's resource estimate is the maximum envelope. Bundle `[environment]` values may request less, never more.
+
+Validate at least these values across draft and bundle:
+
+- CPUs, compared against the draft's `cpuMillis` — `cpus` of 4 means 4000 milliCPU
+- memory in MB
+- storage in MB
+- GPU count
+
+Also ensure the request does not exceed the trial sandbox: 8 CPUs, 65536 MB of memory, 40960 MB of storage. A request above the sandbox is rejected rather than run starved.
+
+# Structure-stage mindset
+
+Before upload, assume the inspection and structure stages will reject:
+
+- missing required paths
+- duplicate or unsafe archive paths
+- malformed `task.toml`
+- mismatched draft/bundle network declarations
+- bundle resource requests above the draft
+
+# Local preflight requirement
+
+Whenever a task is generated or revised, run local validation before considering it ready. Validation should fail fast and report concrete corrective actions.
+
+The repository provides one tool per locally reproducible funnel stage, and each accepts `--slug`:
+
+- `scripts/new_task.py` to scaffold the draft, plan, and task skeleton together
+- `scripts/validate_odyssey_task.py` for draft bounds, bundle structure, and draft/bundle consistency
+- `scripts/scan_bundle_leaks.py` for held-out material that leaked into the image or the instruction
+- `scripts/run_oracle_nop.py` for the oracle and nop runs, which need Docker
+- `scripts/check_novelty.py` and `scripts/ledger.py` for duplicate detection
+- `scripts/preflight.sh` to run all of them in order
+- `scripts/package_task.py` to verify everything and only then write `zip/<slug>.zip`
+
+Produce the archive with `package_task.py` rather than by hand: it re-runs every gate first, refuses to write the archive if any fails, preserves the executable bit on `tests/test.sh` and `solution/solve.sh`, keeps interpreter and editor droppings out, and validates the archive after writing it.
+
+Never describe a bundle as validated on the strength of a check that did not run. The validator prints unrunnable checks as `SKIPPED`; treat those as unknown, not as passing.
+
+# Bundle layout conventions
+
+`tasks/<slug>/` is the bundle root: what is in that directory is what ends up in the archive. Do not place notes or planning files there — the bundle plan belongs in `plans/<slug>.md`.
+
+Both a flat ZIP and one nested under a single top-level directory are accepted, and the validator normalizes between them. Validate the actual ZIP before upload, not only the unpacked directory, because path safety and the 512 MiB limit apply to the archive.
+
+Keep `tests/` and `solution/` out of the image. The Dockerfile should copy only the starting state into `/app`, so nothing the agent can read reveals the held-out cases or the reference fix.
+
+`examples/reference-bundle/` is a complete working bundle that satisfies every local gate. Prefer adapting it over assembling a bundle from scratch. Note that it is deliberately too easy to submit; copy its structure, not its difficulty.

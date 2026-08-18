@@ -1,0 +1,18 @@
+# Task artifacts stay local. The ledger records submitted bundle hashes.
+drafts/*
+!drafts/.gitkeep
+plans/*
+!plans/.gitkeep
+tasks/*
+!tasks/.gitkeep
+zip/*
+!zip/.gitkeep
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+.DS_Store
+*.swp

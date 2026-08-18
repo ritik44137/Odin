@@ -1,0 +1,33 @@
+[metadata]
+name = "replace-with-task-title"
+working_slug = "replace-with-working-slug"
+collection_family = "Library clone"
+task_family = "feature_development"
+verifier_family = "programmatic"
+
+[agent]
+network_mode = "no-network"
+timeout_sec = 7200
+
+[verifier]
+network_mode = "no-network"
+timeout_sec = 1800
+
+[environment]
+cpus = 4
+memory_mb = 4096
+storage_mb = 2048
+gpus = 0
+network_mode = "no-network"
+workdir = "/app"
+
+# Notes:
+# - Harbor NetworkMode values are no-network, public, and allowlist.
+# - The draft form still says none/allowlist; none maps to no-network, and
+#   public is Harbor's spelling of open egress (refused for [agent]).
+# - Keep [environment], [agent], and [verifier] on the same mode. A phase
+#   override that differs from the environment baseline needs dynamic_network_policy.
+# - [environment].network_mode is the runtime baseline, not docker-build networking.
+# - [environment] values must not exceed the draft's resourceEstimate.
+# - Do not invent keys (entrypoint, dockerfile); Harbor rejects unknown fields
+#   under extra=forbid parsers and ignores them otherwise.

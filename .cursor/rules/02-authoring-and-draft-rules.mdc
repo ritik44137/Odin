@@ -1,0 +1,134 @@
+---
+description: Odyssey draft field requirements, classification rules, and authoring standards
+alwaysApply: true
+---
+
+# Draft authoring objective
+
+A valid Odyssey draft is not just complete; it is specific enough that a reviewer can understand the task, trust the grading strategy, and predict the bundle that will later be uploaded.
+
+# Classification rules
+
+## collectionFamily
+
+Choose the closest honest fit:
+
+- **Library clone**: reimplement a focused library or module to spec
+- **Product clone**: build a working slice of a real application
+- **ML engineering**: train, tune, evaluate, or wire up a model against a metric
+- **Algorithmic optimization**: preserve correctness while measurably improving speed or resource use
+
+Do not force novelty by misclassifying the task.
+
+## taskFamily
+
+Choose from:
+
+- `feature_development`
+- `debugging`
+- `refactoring`
+- `performance`
+- `systems_integration`
+- `other`
+
+## verifierFamily
+
+Choose from:
+
+- `programmatic`
+- `optimization`
+- `ml_artifact`
+- `custom`
+
+# Field authoring rules
+
+Paste-facing draft text, `instruction.md`, and any other prose that will be
+copied onto the Odyssey form or shown to the agent as the problem statement
+must use only characters a standard keyboard can type: tab, newline, carriage
+return, and printable ASCII (space through tilde). Do not use arrows,
+superscripts, subscripts, em or en dashes, ellipsis characters, curly quotes,
+or other Unicode glyphs. Write `->`, `<-`, `^2`, `--`, `...`, `<=`, `>=`,
+`!=`, and straight `"` / `'` instead. The validator rejects any other
+character in the draft file and in `instruction.md`.
+
+## title
+
+Short, human-scannable, and descriptive. It should help a reviewer triage a queue, not speak to the agent.
+
+## workingSlug
+
+Lowercase kebab case only, 3 to 80 characters, letters `a-z`, digits, and single hyphens. Tied to the core engineering problem rather than the domain dressing.
+
+The slug is chosen once and is then fixed: it names `drafts/<slug>.md`, `plans/<slug>.md`, `tasks/<slug>/`, and `zip/<slug>.zip`, and must match `[metadata] working_slug` in `task.toml`. A revision keeps the slug; never fork to a new one to escape a failing gate.
+
+## objective
+
+Describe the concrete deliverable and what done looks like. Write it the way you would hand the work to an engineer. Avoid motivational filler and avoid hiding key acceptance conditions in other fields.
+
+## motivation
+
+Explain the real-world engineering scenario the task represents. Ground the task in realistic work rather than synthetic challenge design.
+
+## difficultyExplanation
+
+Name the actual sources of difficulty: reasoning traps, interface ambiguities that must be resolved from code, performance tradeoffs, tricky invariants, failure modes, or exploit resistance. Never describe difficulty only as scale or time required.
+
+## expertTimeEstimateHours
+
+Provide an honest end-to-end expert estimate. This is descriptive metadata and should not be tuned to game intake.
+
+## environmentSummary
+
+Describe exactly what is in the sandbox at start: base image assumptions, tools, languages, dependencies, and starting contents of `/app`.
+
+## resourceEstimate
+
+Stay within Odyssey constraints and request only what is justified. The draft values define the upper bound that the bundle may request.
+
+The form accepts figures far above what a trial provides — memory up to 262144 MB, cpuMillis up to 64000 — but the trial sandbox supplies 8 CPUs, 65536 MB of memory, and 40960 MB of storage, and a request above that is **rejected at intake** rather than run starved. Treat the sandbox figures as the real ceiling, not the form's maxima.
+
+## networkRequirements
+
+Default to `none`. Use `allowlist` only when the task itself truly needs specific hosts. Justification must explain why sealed execution would break the task's objective.
+
+This field describes the task, not the harness. The rollout already runs deny-all plus the model endpoint the harness injects, so needing the harness to work is not a reason to request egress. Hosts are accepted only in allowlist mode, at most 100 of them.
+
+## oracleStrategy
+
+Describe how the reference solution reaches full reward. If this cannot be explained clearly, the task is not ready.
+
+## verificationStrategy
+
+Describe what the verifier runs, what it checks, how visible and hidden checks are split, and why those checks measure the objective rather than a shortcut.
+
+## binarySuccessCondition
+
+State one objective pass/fail line that is machine-checkable and unambiguous.
+
+## partialScoreStrategy
+
+Prefer monotone partial credit. Explain the scoring components and how they accumulate.
+
+## anticipatedExploits
+
+List the shortcuts an agent may try and how the verifier prevents each. Assume the agent will exploit leaked data, hard-code expected outputs, or optimize the metric without solving the task unless the design prevents it.
+
+# Draft quality requirements
+
+A strong draft should be:
+
+- specific enough to implement without guessing the target behavior
+- constrained enough to verify objectively
+- realistic enough to resemble professional engineering work
+- difficult for frontier agents for the right reasons
+- internally consistent across objective, environment, resources, verifier, and exploits
+
+# Hard constraints to remember
+
+- Draft text bounds are minimums, not quality targets.
+- The effective agent timeout must be at least 7200 seconds, and neither timeout may exceed 86400 seconds.
+- The whole trial — build, agent, verify, teardown — must fit within the 50400 second pool, so agent plus verifier must leave room for build and teardown.
+- Requested compute cannot exceed 8 CPUs, 65536 MB memory, and 40960 MB storage in the actual trial sandbox; above that the task is rejected at intake.
+- Open internet is not an accepted rollout mode.
+- `expertTimeEstimateHours` is descriptive metadata and is not a gate, so give an honest figure however large. The long-horizon requirement is enforced on the agent time budget instead.
+- Draft fields and `instruction.md` must be keyboard-ASCII only; arrows, superscripts, and typographic dashes are rejected.

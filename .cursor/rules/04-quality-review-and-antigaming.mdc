@@ -1,0 +1,93 @@
+---
+description: Odyssey quality bar, reviewer expectations, and anti-gaming standards
+alwaysApply: true
+---
+
+# Review reality
+
+Passing deterministic checks is necessary but not sufficient. A task must still survive model-judge quality checks, oracle and nop evaluation, difficulty probing, and human review.
+
+# What makes a task keepable
+
+A strong task is:
+
+- clearly within one collection family
+- solvable by its reference solution
+- objectively and robustly verified
+- resistant to shortcutting and overfitting
+- realistic as professional engineering work
+- genuinely novel, not a cosmetic re-skin
+- hard for frontier agents, but not impossible
+
+# Verification quality standard
+
+Do not rely on a single assertion or one happy-path test. Verification should ideally cover multiple channels such as:
+
+- observable behavior and outputs
+- invariants and edge cases
+- family-appropriate quality or performance metrics
+- hidden cases that prevent overfitting visible checks
+
+# Visible and hidden verifier split
+
+The agent should have enough visibility to understand what success looks like, but not enough to game the decisive checks. Author verification with an explicit split:
+
+- visible checks for development guidance
+- hidden held-out checks for real grading
+
+Document the split in `verificationStrategy`.
+
+# Anti-gaming design expectations
+
+Assume the agent may attempt to:
+
+- hard-code expected outputs
+- read or infer held-out data
+- satisfy a proxy metric without solving the task
+- exploit test harness assumptions
+- patch only visible cases while failing generality
+- shadow a graded module with a file in the working directory
+- edit or replace the verifier rather than solve the task
+
+The verifier should directly counter these tactics. Structural countermeasures are stronger than trust:
+
+- keep held-out fixtures under `tests/` and never copy them into the image
+- grade through the public interface, from a directory the agent does not control
+- vary hidden inputs, ideally generating them, so memorizing the visible set does not generalize
+- check invariants over generated input as a channel separate from enumerated cases
+
+`scripts/scan_bundle_leaks.py` detects the mechanical failures of this design: a Dockerfile that copies `tests/` or `solution/`, a held-out file byte-identical to an agent-readable one, an instruction that quotes expected outputs, a verifier grading against a fixture inside `/app`, and a `tests/` directory with no held-out portion at all.
+
+# Prove the anti-gaming claim, do not assert it
+
+Before declaring `anticipatedExploits` adequate, write the shallow patch yourself: the smallest change that satisfies every visible check. Run the verifier against it. It must earn partial credit and still fail. If it passes, the hidden split is decorative.
+
+`examples/reference-bundle/` demonstrates the intended shape, with measured scores of 0.0 untouched, 0.3 for a visible-only patch, and 1.0 solved.
+
+# Partial scoring convention
+
+Build the score from independently weighted groups so it rises monotonically with real progress, and reduce it to a single `ODYSSEY_SCORE=<float between 0 and 1>` line that `scripts/run_oracle_nop.py` can read. Keep the binary gate separate: all groups must pass for the task to count as solved. This marker is a local convention rather than a documented platform interface, as recorded in `docs/odyssey-open-questions.md`.
+
+# Common rejection patterns
+
+Tasks are often rejected because they are:
+
+- vague about what done means
+- weakly verified
+- unrealistic or puzzle-like
+- insufficiently novel
+- easy for the wrong reasons
+- impossible because the reference or environment is broken
+- internally inconsistent across objective, verifier, and resources
+
+# Reviewer-oriented writing rule
+
+Write every draft so a skeptical reviewer can answer yes to these questions:
+
+- Is the engineering objective clear?
+- Does the verifier really measure that objective?
+- Can the reference solution actually solve it?
+- Is the task realistic and worth keeping?
+- Has the author anticipated exploit paths seriously?
+
+Write those answers in keyboard-accessible ASCII so the form paste is lossless.

@@ -38,6 +38,11 @@ Builds the runtime image and prepares `/app`. Dependencies should be baked into 
 ## tests/test.sh
 
 This is the canonical verifier entrypoint. The grader runs this exact file.
+Harbor requires it to write `/logs/verifier/reward.txt` (a single float in
+`[0,1]`) or `/logs/verifier/reward.json` on every exit path, including failures.
+Missing either file is a trial failure even if the script printed a score and
+exited 0. Also print `ODYSSEY_SCORE=<float>` so the local oracle/nop harness
+can read the same value from stdout.
 
 ## solution/solve.sh
 

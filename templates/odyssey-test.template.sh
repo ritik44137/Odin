@@ -16,7 +16,20 @@ cd /app
 # Uses $0 rather than BASH_SOURCE so the script still resolves its own directory
 # if the harness invokes it with a POSIX shell.
 TESTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Harbor fails the trial unless /logs/verifier/reward.txt or reward.json exists
+# after this script exits, including on a failing run.
+REWARD_DIR="${ODYSSEY_REWARD_DIR:-/logs/verifier}"
 SCORE_FILE="${ODYSSEY_SCORE_FILE:-/tmp/odyssey_score}"
+score="0.0000"
+
+emit_reward() {
+  mkdir -p "${REWARD_DIR}"
+  printf '%s\n' "${score}" > "${REWARD_DIR}/reward.txt"
+  printf '%s\n' "${score}" > "${SCORE_FILE}"
+  echo "ODYSSEY_SCORE=${score}"
+}
+
+trap emit_reward EXIT
 
 total_weight=0
 earned_weight=0
@@ -57,8 +70,6 @@ if [ "${total_weight}" -eq 0 ]; then
 fi
 
 score=$(awk -v e="${earned_weight}" -v t="${total_weight}" 'BEGIN { printf "%.4f", e / t }')
-echo "${score}" > "${SCORE_FILE}"
-echo "ODYSSEY_SCORE=${score}"
 echo "earned ${earned_weight} of ${total_weight} weight"
 
 # Binary success condition: every group must pass. Partial score above is what

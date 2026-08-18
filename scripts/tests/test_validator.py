@@ -50,6 +50,8 @@ TEST_SH = """#!/usr/bin/env bash
 set -uo pipefail
 cd /app
 python -m pytest -q "$(dirname "$0")/visible"
+mkdir -p /logs/verifier
+echo "1.0" > /logs/verifier/reward.txt
 echo "ODYSSEY_SCORE=1.0"
 """
 
@@ -250,6 +252,15 @@ class TestBundleContents:
         assert read.errors == []
         result = validator.validate_bundle(files, draft)
         assert result.errors == [], result.errors
+
+    def test_verifier_without_harbor_reward_file_is_rejected(self, tmp_path, draft):
+        bundle = make_bundle(
+            tmp_path / "bundle",
+            extra={"tests/test.sh": "#!/usr/bin/env bash\nset -uo pipefail\necho ODYSSEY_SCORE=1.0\n"},
+        )
+        files, _ = validator.read_bundle(bundle)
+        result = validator.validate_bundle(files, draft)
+        assert any("/logs/verifier/reward" in e for e in result.errors)
 
     def test_instruction_rejects_non_keyboard_characters(self, tmp_path, draft):
         bundle = make_bundle(

@@ -21,17 +21,19 @@ in `plans/` rather than beside the task files.
 
 ## Verifier score reporting
 
-**Assumed:** `tests/test.sh` prints one `ODYSSEY_SCORE=<float in [0,1]>` line and
-exits non-zero unless the binary success condition holds. `run_oracle_nop.py` reads
-that marker and falls back to exit status when it is absent.
+**Confirmed (Harbor):** `tests/test.sh` must write `/logs/verifier/reward.txt`
+(a single float in `[0,1]`) or `/logs/verifier/reward.json` (numeric metrics).
+Harbor downloads that directory after the script exits and fails the trial with
+"Verifier completed without writing a reward file" if neither exists. Exit status
+is not a substitute. Write the file on every path, including failures; an `EXIT`
+trap is the reliable way.
 
-**Unknown:** how the real harness extracts a partial score. Terminal-Bench-style
-harnesses commonly derive reward from a parsed test report rather than a printed
-marker. If the platform expects a specific report format or score file path, the
-marker is harmless but the partial credit will not be read.
+**Local convention:** the same float is also printed as `ODYSSEY_SCORE=<float>`
+so `run_oracle_nop.py` can read it from stdout. If that marker is absent, the
+local harness falls back to exit status (`0 -> 1.0`, non-zero -> `0.0`).
 
-**Consequence if wrong:** grading collapses to pass/fail, losing the partial credit
-the draft's `partialScoreStrategy` promises. Low risk, easy to retrofit.
+**Consequence if missing:** the platform records an infra-style verifier failure
+instead of a score, even when the oracle would have earned full reward.
 
 ## What `environment/` becomes
 

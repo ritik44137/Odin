@@ -5,7 +5,21 @@ set -uo pipefail
 cd /app
 
 TESTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Harbor fails the trial unless /logs/verifier/reward.txt or reward.json exists
+# after this script exits, including on a failing run.
+REWARD_DIR="${ODYSSEY_REWARD_DIR:-/logs/verifier}"
 SCORE_FILE="${ODYSSEY_SCORE_FILE:-/tmp/odyssey_score}"
+score="0.0000"
+
+emit_reward() {
+  mkdir -p "${REWARD_DIR}"
+  printf '%s\n' "${score}" > "${REWARD_DIR}/reward.txt"
+  printf '%s\n' "${score}" > "${SCORE_FILE}"
+  echo "ODYSSEY_SCORE=${score}"
+}
+
+trap emit_reward EXIT
+
 export PYTHONPATH="/app:${PYTHONPATH:-}"
 export PYTHONDONTWRITEBYTECODE=1
 
@@ -42,8 +56,6 @@ if [ "${total_weight}" -eq 0 ]; then
 fi
 
 score=$(awk -v e="${earned_weight}" -v t="${total_weight}" 'BEGIN { printf "%.4f", e / t }')
-echo "${score}" > "${SCORE_FILE}"
-echo "ODYSSEY_SCORE=${score}"
 echo "earned ${earned_weight} of ${total_weight} weight"
 
 if [ "${#failed_groups[@]}" -gt 0 ]; then

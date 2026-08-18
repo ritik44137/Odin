@@ -418,6 +418,19 @@ def check_script(r: ValidationResult, files: Dict[str, bytes], path: str, label:
         r.error(f"{path} still appears to contain template placeholder content")
     if not content.startswith("#!"):
         r.warn(f"{path} has no shebang; the harness runs this {label} directly")
+    if path == "tests/test.sh" and not writes_harbor_reward(content):
+        r.error(
+            "tests/test.sh does not write /logs/verifier/reward.txt or "
+            "/logs/verifier/reward.json; Harbor fails the trial if neither exists"
+        )
+
+
+def writes_harbor_reward(content: str) -> bool:
+    if "/logs/verifier/reward.txt" in content or "/logs/verifier/reward.json" in content:
+        return True
+    return "/logs/verifier" in content and (
+        "reward.txt" in content or "reward.json" in content
+    )
 
 
 def validate_bundle(files: Dict[str, bytes], draft: Optional[Dict]) -> ValidationResult:

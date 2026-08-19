@@ -1,0 +1,65 @@
+---
+description: ENGINE_8 harden -- structural difficulty; no Case 6 clone, no decorative pytest
+alwaysApply: false
+---
+
+# ENGINE_8 -- Harden
+
+Command: `/harden-task`. Use when the task is **solvable** and **too easy**:
+visible-only patch would pass, agents one-shot, or
+`check_difficulty_design.py` / audit says decorative hardness.
+
+This is the Odyssey stand-in for Terminus "Case 6". It is **not** ingest ->
+staging -> export on every slug. That template is how corpora went trivial
+together and would fail Odyssey similarity.
+
+Policy: `docs/odyssey-difficulty-design.md`.
+
+## Required structural change (at least two)
+
+Pick family-native forms of:
+
+1. **Interaction** -- a second stage or module whose bugs only appear when
+   the first is already correct (probe L)
+2. **Decoy split** -- obvious file off the hot path; decoy-only patch fails
+   hidden (probe D)
+3. **Independent hidden trap** -- different root cause than visible
+4. **Almost-correct trap** -- plausible wrong algorithm (probe A)
+5. **Generated hidden group** -- cannot hard-code enumerated cases
+6. **Persistence / cross-run** -- only if the product actually has state
+
+Also: visible `run_group` weight stays a minority (~30%).
+
+## Forbidden (decorative)
+
+- More pytest on the same operator
+- New hash/fingerprint fields + matching tests, same bugs
+- Longer docs that spell the algorithm
+- Instruction recipes, bug file names, goldens
+- Relabeling `difficultyExplanation` without changing `/app` or tests
+- Padding hours or `timeout_sec` on the same ticket (that is still too short)
+- Secret rules that exist only in `tests/hidden/` (that is unfair, lane F)
+- Weakening tests so agents pass
+
+## Must re-run after edits
+
+```bash
+python3 scripts/check_difficulty_design.py --slug <slug>
+python3 scripts/scan_bundle_leaks.py --slug <slug>
+scripts/preflight.sh --slug <slug> --with-oracle
+```
+
+Plus probes V, D, L, A on the new tree. If V now fully passes, stop.
+
+## Required reply
+
+```text
+Engine: 8
+Structural changes: <two or more, concrete paths>
+Decorative rejected: <what we did not do>
+Probes V/D/L/A: PASS/FAIL each (hidden still fails = probe PASS)
+Oracle 1.0 / NOP floor: yes/no
+Ready for ENGINE_6: yes/no
+```
+
+`Ready for ENGINE_6: no` unless probes V/D/L/A are actually run.

@@ -7,7 +7,7 @@ verifier_family = "programmatic"
 
 [agent]
 network_mode = "no-network"
-timeout_sec = 7200
+timeout_sec = 18000
 
 [verifier]
 network_mode = "no-network"
@@ -15,8 +15,8 @@ timeout_sec = 1800
 
 [environment]
 cpus = 4
-memory_mb = 4096
-storage_mb = 2048
+memory_mb = 16384
+storage_mb = 20480
 gpus = 0
 network_mode = "no-network"
 workdir = "/app"
@@ -31,3 +31,7 @@ workdir = "/app"
 # - [environment] values must not exceed the draft's resourceEstimate.
 # - Do not invent keys (entrypoint, dockerfile); Harbor rejects unknown fields
 #   under extra=forbid parsers and ignores them otherwise.
+# - 18000s / 4 CPUs / 16 GB / 20 GB are collection-scale defaults (SWE-Marathon
+#   template), not Harbor stock init. 7200s is the platform floor, not the
+#   collection target. Ticket-sized /app still fails Automated Difficulty.
+

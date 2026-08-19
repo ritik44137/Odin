@@ -111,6 +111,7 @@ class TestReferenceBundle:
         files = leaks.read_bundle(REFERENCE_BUNDLE)
         findings = leaks.Findings()
         leaks.check_dockerfile(files, findings)
+        leaks.check_ai_scaffolding(files, findings)
         leaks.check_duplicate_content(files, findings)
         leaks.check_instruction_leaks(files, findings)
         leaks.check_verifier_surface(files, findings)

@@ -29,17 +29,17 @@ programmatic
 
 
 ## Expert time estimate (hours)
-4
+80
 
 ## Environment summary
 
 
 ## Resource estimate
 cpuMillis: 4000
-memoryMb: 4096
-storageMb: 2048
+memoryMb: 16384
+storageMb: 20480
 gpuCount: 0
-agentTimeoutSec: 7200
+agentTimeoutSec: 18000
 verifierTimeoutSec: 1800
 
 ## Network requirements
@@ -64,3 +64,7 @@ hosts: (none)
 
 ## Notes (local only -- do not paste)
 Local scratch only; the Odyssey form has no notes field. Remove before submitting.
+Collection bar: remaining work >= 40 honest expert hours, a complete system
+in the declared family, agent budget 4-10h. Ticket-sized modules fail
+Automated Difficulty as too short / not long-horizon. See
+docs/odyssey-long-horizon.md. Do not paste this note.

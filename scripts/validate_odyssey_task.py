@@ -36,6 +36,7 @@ REQUIRED_BUNDLE_PATHS = paths.REQUIRED_BUNDLE_PATHS
 SANDBOX_CPUS = 8
 SANDBOX_MEMORY_MB = 65536
 SANDBOX_STORAGE_MB = 40960
+SANDBOX_AGENT_TIMEOUT_SEC = 37000
 
 # The 14h per-trial pool covers build + agent + verify + teardown, so agent and
 # verifier timeouts alone must leave room for the phases we cannot measure here.
@@ -239,6 +240,20 @@ def validate_draft(draft: Dict, schema: DraftSchema, source_text: Optional[str] 
     hours = draft.get("expertTimeEstimateHours")
     if isinstance(hours, bool) or not isinstance(hours, (int, float)) or hours <= 0:
         r.error("draft.expertTimeEstimateHours must be a positive number")
+    elif isinstance(hours, (int, float)) and hours < 40:
+        notes = str(draft.get("notes") or "")
+        motivation = str(draft.get("motivation") or "")
+        plumbing = "plumbing exemplar" in (notes + " " + motivation).lower()
+        plumbing = plumbing or "deliberately small exemplar" in (notes + " " + motivation).lower()
+        plumbing = plumbing or "not a submittable task" in (notes + " " + motivation).lower()
+        if not plumbing:
+            r.warn(
+                f"draft.expertTimeEstimateHours is {hours}; collection-scale remaining "
+                "work starts at 40 honest expert hours. The difficulty stage rejects "
+                "ticket-sized tasks as too short / not long-horizon "
+                "(docs/odyssey-long-horizon.md). This is a local collection bar; "
+                "the form still accepts any positive number"
+            )
 
     resource = draft.get("resourceEstimate")
     if not isinstance(resource, dict):
@@ -251,6 +266,17 @@ def validate_draft(draft: Dict, schema: DraftSchema, source_text: Optional[str] 
 
         agent_timeout = resource.get("agentTimeoutSec")
         verifier_timeout = resource.get("verifierTimeoutSec")
+        if isinstance(agent_timeout, int) and agent_timeout < 14400:
+            notes = str(draft.get("notes") or "")
+            motivation = str(draft.get("motivation") or "")
+            plumbing = "plumbing exemplar" in (notes + " " + motivation).lower()
+            if not plumbing:
+                r.warn(
+                    f"draft.resourceEstimate.agentTimeoutSec is {agent_timeout}s; "
+                    "collection-scale Harbor tasks budget 4-10 hours (template 18000s). "
+                    "7200s is the platform floor, not the collection target "
+                    "(docs/odyssey-long-horizon.md)"
+                )
         if isinstance(agent_timeout, int) and isinstance(verifier_timeout, int):
             total = agent_timeout + verifier_timeout
             if total > TRIAL_POOL_SEC:
@@ -281,6 +307,11 @@ def validate_draft(draft: Dict, schema: DraftSchema, source_text: Optional[str] 
             r.error(
                 f"draft.resourceEstimate.storageMb ({resource['storageMb']}) exceeds the trial sandbox storage of "
                 f"{SANDBOX_STORAGE_MB} MB; a request above the sandbox is rejected at intake"
+            )
+        if isinstance(agent_timeout, int) and agent_timeout > SANDBOX_AGENT_TIMEOUT_SEC:
+            r.error(
+                f"draft.resourceEstimate.agentTimeoutSec ({agent_timeout}) exceeds the trial agent timeout cap of "
+                f"{SANDBOX_AGENT_TIMEOUT_SEC}s; a request above the cap is rejected at intake"
             )
 
     network = draft.get("networkRequirements")
@@ -464,6 +495,8 @@ def validate_bundle(files: Dict[str, bytes], draft: Optional[Dict]) -> Validatio
             r.warn("instruction.md does not explicitly label the objective")
         if "success" not in lowered:
             r.warn("instruction.md does not explicitly describe what success looks like")
+        if instruction_text is not None and "/app" not in instruction_text:
+            r.warn("instruction.md does not mention /app; Harbor instructions should use absolute paths")
 
     check_script(r, files, "tests/test.sh", "verifier")
     check_script(r, files, "solution/solve.sh", "reference solution")
@@ -556,8 +589,15 @@ def validate_task_toml(r: ValidationResult, task_toml: Dict, draft: Optional[Dic
     verifier_timeout = timeout_seconds(verifier.get("timeout_sec"))
     if isinstance(agent_timeout, int):
         if agent_timeout < 7200:
-            r.error("task.toml [agent].timeout_sec must be at least 7200 to meet the long-horizon floor")
-        if agent_timeout > 86400:
+            r.error(
+                "task.toml [agent].timeout_sec must be at least 7200 "
+                "(platform agent-timeout floor; collection-scale remaining work is a separate bar)"
+            )
+        if agent_timeout > SANDBOX_AGENT_TIMEOUT_SEC:
+            r.error(
+                f"task.toml [agent].timeout_sec exceeds the trial agent timeout cap of {SANDBOX_AGENT_TIMEOUT_SEC}s"
+            )
+        elif agent_timeout > 86400:
             r.error("task.toml [agent].timeout_sec exceeds the 86400s cap")
     if isinstance(verifier_timeout, int) and verifier_timeout > 86400:
         r.error("task.toml [verifier].timeout_sec exceeds the 86400s cap")

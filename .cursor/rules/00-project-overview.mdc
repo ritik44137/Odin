@@ -31,7 +31,14 @@ Given a raw task idea, produce:
 - The verifier must measure the real objective, not a weak proxy.
 - Anti-gaming analysis is mandatory, not optional.
 - Resource and network declarations must be internally consistent across draft and bundle.
-- A task that merely passes deterministic structure checks is not done; it must also be review-worthy.
+- A task that merely passes deterministic structure checks is not done; it must also be review-worthy, **collection-scale** (not a ticket), and designed so a frontier agent will not one-shot it.
+
+# Engine routing
+
+Numbered engines live in `.cursor/rules/engines/`. The always-on picker is
+`.cursor/rules/09-engine-router.mdc`. One paste, one engine. Difficulty is
+decided in ENGINE_1 and implemented in ENGINE_3 / ENGINE_8; do not discover
+it after the zip. Map: `docs/odyssey-engines.md`.
 
 # How Cursor should behave in this repo
 
@@ -41,7 +48,14 @@ When given a task idea, Cursor should:
 - turn vague goals into concrete, objectively verifiable deliverables
 - surface missing assumptions instead of silently inventing them
 - produce validation-ready artifacts using the local schema and templates
+- implement the bundle in Harbor order: instruction, task.toml, environment,
+  oracle, tests -- see `docs/harbor-task-anatomy.md`
 - check for likely rejection reasons before declaring the task ready
+- refuse to scaffold until ENGINE_1 can name the first-attempt trap **and**
+  collection-scale remaining work (complete system, >= 40 honest expert
+  hours). Ticket-sized Harbor tasks fail Automated Difficulty as too short
+  / not long-horizon even when frontier models fail them. See
+  `docs/odyssey-long-horizon.md`.
 
 # What Cursor should avoid
 
@@ -54,6 +68,8 @@ Cursor must not:
 - request resources higher than the declared Odyssey sandbox allows
 - treat similarity avoidance as mere renaming of an old task
 - write draft or instruction text that cannot be typed on a standard keyboard
+- put an end-to-end solver in `tests/` or echo goldens from `solution/solve.sh`
+- COPY `tests/` or `solution/`, or create Harbor reserved paths, in the Dockerfile
 
 # Authoring philosophy
 

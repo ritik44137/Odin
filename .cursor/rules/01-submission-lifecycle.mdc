@@ -71,7 +71,7 @@ Never place notes or planning files inside `tasks/<slug>/`: that directory is sh
 
 Follow every step, in order, every time. `docs/odyssey-repo-layout.md` is the full version.
 
-1. normalize the idea and classify it
+1. normalize the idea and classify it (refuse if remaining work is a ticket)
 2. choose the slug
 3. `scripts/new_task.py --slug <slug>`
 4. write `drafts/<slug>.md` to the draft authoring standard
@@ -80,7 +80,7 @@ Follow every step, in order, every time. `docs/odyssey-repo-layout.md` is the fu
 7. fill `plans/<slug>.md`
 8. implement `tasks/<slug>/`
 9. `scripts/preflight.sh --slug <slug> --with-oracle`
-10. prove a visible-only patch still fails
+10. prove probes V/D/L/A: visible-only, decoy-only, one-layer, almost-correct still fail hidden groups
 11. `scripts/package_task.py --slug <slug> --with-oracle`
 12. `scripts/ledger.py add --slug <slug>`, then record the verdict when it arrives
 
@@ -88,6 +88,7 @@ Everything must be verified before the archive is written. `package_task.py` enf
 
 # Cursor operating rule
 
-When helping author a task, always ask internally: what would fail first in the lifecycle if this were uploaded today? Then improve the task at the earliest failing stage, not the latest one.
+Route the paste through `.cursor/rules/09-engine-router.mdc` before editing.
+When helping author a task, always ask internally: what would fail first in the lifecycle if this were uploaded today? Then improve the task at the earliest failing stage, not the latest one. Difficulty probe saturation is an earliest-stage fail: ENGINE_8, not more pytest.
 
 Never report a task as ready on the strength of a gate that did not run. Quote real command output, and treat a skipped check as unknown rather than as passing.

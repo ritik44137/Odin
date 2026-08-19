@@ -26,20 +26,6 @@ TEMPLATE_MAP = {
     "solution/solve.sh": "odyssey-solve.template.sh",
 }
 
-DOCKERFILE_STARTER = """FROM python:3.11-slim
-
-# Bake every dependency in: there is no network during the rollout.
-# RUN pip install --no-cache-dir pytest==8.3.4
-
-WORKDIR /app
-
-# Copy only the starting state the agent should see. Keeping tests/ and solution/
-# out of the image is what makes the held-out cases held out.
-COPY app/ /app/
-
-ENV PYTHONPATH=/app
-"""
-
 APP_PLACEHOLDER = """# Starting state
 
 Replace this directory with the code the agent finds in /app at the start of the
@@ -125,7 +111,7 @@ def main() -> int:
             content = content.replace('verifier_family = "programmatic"', f'verifier_family = "{args.verifier_family}"')
         created.append(write(task / rel_path, content, executable=rel_path.endswith(".sh")))
 
-    created.append(write(task / "environment" / "Dockerfile", DOCKERFILE_STARTER))
+    created.append(write(task / "environment" / "Dockerfile", (paths.TEMPLATES_DIR / "odyssey-dockerfile.template").read_text(encoding="utf-8")))
     created.append(write(task / "environment" / "app" / "README.md", APP_PLACEHOLDER))
     created.append(write(task / "tests" / "visible" / ".gitkeep", ""))
     created.append(write(task / "tests" / "hidden" / ".gitkeep", ""))

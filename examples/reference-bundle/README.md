@@ -4,15 +4,18 @@ A complete, working bundle whose purpose is to demonstrate the *plumbing* every
 Odyssey task needs. It passes every local gate in this repo, so it is the thing to
 copy when starting a real task and the thing to diff against when a gate fails.
 
-**This is not a submittable task.** It is deliberately far too easy — an hour of
-work at most, and a frontier model would one-shot it. It would be rejected by the
-difficulty probe, and correctly so. What it demonstrates is structure, not
-difficulty.
+**This is not a submittable task.** It is deliberately far too easy -- an hour of
+work at most, a ticket-sized helper, and a frontier model would one-shot it. It
+would be rejected by Automated Difficulty as too short / not long-horizon, and
+correctly so. Copy its plumbing, not its remaining-work surface. Real
+submissions: `docs/odyssey-long-horizon.md`.
 
 ## What it shows
 
 - the exact required paths, and a Dockerfile that copies *only* the starting state
-  into `/app`, leaving `tests/` and `solution/` outside the image
+  into `/app`, leaving `tests/` and `solution/` outside the image and leaving
+  Harbor reserved paths (`/tests`, `/solution`, `/oracle`, `/logs/verifier`)
+  untouched
 - a real visible/hidden split: `tests/visible/` states what done means, while
   `tests/hidden/` holds enumerated edge cases and property checks
 - monotone partial scoring: three weighted groups (30/40/30) reduced to a single

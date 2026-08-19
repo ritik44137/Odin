@@ -1,0 +1,59 @@
+---
+description: Harbor instruction.md craft -- six principles, absolute paths, no recipes
+alwaysApply: true
+---
+
+# Instruction writing
+
+`instruction.md` is the only problem statement the agent is guaranteed to see.
+Write it as a human engineer handing off work, not as an LLM prompt. Full
+runtime context: `docs/harbor-task-anatomy.md`. Catalog of failures:
+`docs/odyssey-quality-guidelines.md`. Keyboard-ASCII only (`->`, `^2`, `--`,
+`<=`, straight quotes), matching the draft paste rule.
+
+## Six principles
+
+1. **Concise.** One to three short sections. Little markdown. No emoji, no
+   instruction-following marathon, no bold markers highlighting the answer.
+2. **Well specified.** Goal, invariants, output paths, and error behavior are
+   explicit. Hardness must not come from an edge-case dump the agent cannot
+   discover in `/app`.
+3. **Interesting.** Real engineering: a library to spec, a product slice, an
+   ML metric, or a correctness-preserving speedup. Not a one-liner.
+4. **No answers or hints.** Requirements are allowed. Forbidden: stepwise
+   recipes, detection guides that list the bugs, golden numeric/string values
+   the hidden tests check, "you should use library X and function Y".
+5. **Unique.** Different starting state and different expected outcome, not a
+   rename of a known exercise.
+6. **Absolute paths.** `/app/config/settings.json`, never `config/settings.json`.
+   Name the output file and its schema. Do not say "save the results".
+
+## Shape
+
+Prefer this skeleton, filled in concrete terms:
+
+- what is already in `/app` and what is wrong or missing
+- the objective (the public behavior to implement)
+- requirements as checkable bullets
+- what success looks like, without quoting held-out cases
+- constraints (network, do not edit `tests/`, stay inside `/app/...`)
+
+Do not include a "hints" or "detection guidance" section that collapses the
+challenge. Orientation that points at a real spec file (`/app/README.md`,
+`/app/docs/...`) is fine when that file is a contract, not a walkthrough.
+
+## Spec files in `/app`
+
+Files the Dockerfile copies into `/app` may define **what** (schemas, wire
+protocols, error codes). They must not be prompt overflow: do not split a
+how-to recipe into `/app/docs/` to dodge instruction length. Specs should look
+like real engineering docs.
+
+## Anti-patterns
+
+- "Make it better" / "fix the issues" / "handle errors properly"
+- Relative paths
+- Unverifiable tools ("use vim")
+- Exact function signatures, library choices, and build commands that are the
+  solution rather than the interface the agent must preserve
+- Quoting expected outputs that live in `tests/hidden/`

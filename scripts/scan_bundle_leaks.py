@@ -7,9 +7,13 @@ and detectable without running anything:
 
   - the Dockerfile copies tests/ or solution/ into the image, so /app contains
     the answer key or the reference implementation
+  - the Dockerfile mkdir/COPY/chown Harbor reserved paths (/tests, /solution,
+    /oracle, /logs/verifier)
+  - AI scaffolding (CLAUDE.md, AGENTS.md, .cursor/) is baked into environment/
   - a held-out fixture is byte-identical to a file the agent can read
   - instruction.md quotes expected outputs verbatim
   - the verifier grades against a file inside /app, which the agent can rewrite
+  - tests/ fetches or installs at grade time, or branches on EVAL_IS_ORACLE
   - tests/ has no held-out portion at all, so there is no visible/hidden split
 
 Findings are advisory where a legitimate design could explain them, and errors
@@ -31,6 +35,21 @@ import odyssey_paths as paths  # noqa: E402
 HIDDEN_DIR_HINTS = ("hidden", "held_out", "heldout", "private", "sealed", "secret")
 COPY_RE = re.compile(r"^\s*(?:COPY|ADD)\s+(?P<args>.+)$", re.IGNORECASE | re.MULTILINE)
 APP_FIXTURE_RE = re.compile(r"/app/[\w./-]*(expected|golden|answer|fixture|reference)[\w./-]*", re.IGNORECASE)
+RESERVED_PATH_RE = re.compile(
+    r"(?:mkdir|COPY|ADD|chown|chmod)\b[^\n]*(?:/tests\b|/solution\b|/oracle\b|/logs/verifier\b|/logs/agent\b)",
+    re.IGNORECASE,
+)
+RUNTIME_FETCH_RE = re.compile(
+    r"\b(curl|wget|git\s+clone|pip\s+download|pip\s+install|npm\s+(?:install|i)|uvx\b|apt-get\s+install)\b"
+)
+ORACLE_SPLIT_RE = re.compile(r"\bEVAL_IS_ORACLE\b|/oracle\b", re.IGNORECASE)
+AI_SCAFFOLD_NAMES = {
+    "claude.md",
+    "agents.md",
+    "skills.md",
+    ".cursorrules",
+    "copilot-instructions.md",
+}
 TEXT_SUFFIXES = {
     ".py", ".sh", ".txt", ".md", ".json", ".toml", ".yaml", ".yml", ".cfg", ".ini",
     ".js", ".ts", ".go", ".rs", ".java", ".c", ".h", ".cpp", ".sql", ".csv",
@@ -110,6 +129,27 @@ def check_dockerfile(files: Dict[str, bytes], f: Findings) -> None:
                     "context leaks expected outputs into /app"
                 )
 
+    for match in RESERVED_PATH_RE.finditer(text):
+        snippet = " ".join(match.group(0).split())
+        f.errors.append(
+            f"environment/Dockerfile touches Harbor reserved path in `{snippet}`; "
+            "do not mkdir/COPY/chown /tests, /solution, /oracle, or /logs/verifier"
+        )
+
+
+def check_ai_scaffolding(files: Dict[str, bytes], f: Findings) -> None:
+    """LLM workspace files in the image teach the agent to look for scaffolding, not the task."""
+    for name in files:
+        if not name.startswith("environment/"):
+            continue
+        base = Path(name).name.lower()
+        parts = Path(name).parts
+        if base in AI_SCAFFOLD_NAMES or ".cursor" in parts:
+            f.errors.append(
+                f"{name} is AI scaffolding inside the image; delete it from environment/ "
+                "so the starting state looks like a real repository"
+            )
+
 
 def check_duplicate_content(files: Dict[str, bytes], f: Findings) -> None:
     """A held-out file that is byte-identical to an agent-readable one is not held out."""
@@ -172,10 +212,15 @@ def check_verifier_surface(files: Dict[str, bytes], f: Findings) -> None:
             "keep expected outputs under tests/"
         )
 
-    if re.search(r"\bpip\s+install\b|\bnpm\s+(?:install|i)\b|\bapt-get\s+install\b", text):
+    if RUNTIME_FETCH_RE.search(text):
         f.warnings.append(
-            "tests/test.sh installs packages at grade time; the verifier phase may be sealed, "
-            "so bake those dependencies into the image instead"
+            "tests/test.sh appears to fetch or install at grade time; bake those dependencies "
+            "into the image (QG4)"
+        )
+    if ORACLE_SPLIT_RE.search(text):
+        f.warnings.append(
+            "tests/test.sh branches on EVAL_IS_ORACLE or /oracle; oracle and agent must face "
+            "identical tests (QG2)"
         )
 
     sealed_names = [n for n in files if n.startswith("tests/") and n != "tests/test.sh"]
@@ -259,6 +304,7 @@ def main() -> int:
     f = Findings()
 
     check_dockerfile(files, f)
+    check_ai_scaffolding(files, f)
     check_duplicate_content(files, f)
     check_instruction_leaks(files, f)
     check_verifier_surface(files, f)

@@ -1,32 +1,34 @@
 # Task
 
-Implement the requested change in the codebase under `/app`.
+The starting tree in `/app` is incomplete or incorrect for the work described
+below. Implement the change there.
 
 ## Objective
 
-Replace this section with a concise but concrete description of what the agent must build, fix, optimize, or integrate.
+Replace this section with the public behavior to implement, repair, or speed
+up. Name the entrypoints, files, and types in `/app/...` that the agent must
+produce or preserve. Do not describe the algorithm that solves it.
 
 ## Starting point
 
-Describe what already exists in the repository, what is incomplete or broken, and any important constraints about the current implementation.
+What already exists under `/app`, what is broken or missing, and which
+interfaces must not change. Point at real contracts (`/app/README.md`,
+`/app/docs/...`) rather than restating a walkthrough.
 
 ## Requirements
 
-- State the required external behavior.
-- State any important invariants that must continue to hold.
-- State any interfaces, formats, APIs, or compatibility expectations that cannot change.
-- State any performance, correctness, or robustness requirements if relevant.
+- Required external behavior, with absolute `/app/...` output paths.
+- Invariants that must continue to hold.
+- Interfaces, formats, or APIs that cannot change.
+- Error behavior, performance bounds, or robustness rules if they are graded.
 
 ## What success looks like
 
-Explain what a correct solution will accomplish from the verifier's perspective without leaking hidden tests.
+What a correct `/app` will do, from the verifier's point of view, without
+quoting held-out cases or golden values.
 
 ## Constraints
 
-- Do not assume network access unless explicitly stated.
-- Do not rely on modifying the verifier or hidden grading data.
-- Keep the solution within the provided environment and dependency constraints.
-
-## Hints the author may optionally provide
-
-Use this section sparingly. Include orientation that helps the agent work productively without collapsing the challenge.
+- Do not assume network access unless this instruction says so.
+- Do not modify `tests/`; the graded copy is not the one you can see.
+- Keep the change inside the `/app/...` tree named above.

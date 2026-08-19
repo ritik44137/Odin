@@ -3,7 +3,8 @@
 #
 # Shape of a strong verifier:
 #   - a VISIBLE group the agent can also run, stating what "done" means
-#   - a HIDDEN group holding the decisive cases and grading logic
+#     (minority of the score -- aim ~30%, never >= 50%)
+#   - HIDDEN groups with a different failure mode and a generated/property channel
 #   - a monotone partial score built from weighted groups
 #   - exit 0 only when the binary success condition holds
 #
@@ -16,8 +17,12 @@ cd /app
 # Uses $0 rather than BASH_SOURCE so the script still resolves its own directory
 # if the harness invokes it with a POSIX shell.
 TESTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Harbor typically mounts this tree at /tests. Locate via $0 so the same
+# script works under the local harness (/odyssey/tests) too.
+# TEST_DIR="${TEST_DIR:-/tests}"
 # Harbor fails the trial unless /logs/verifier/reward.txt or reward.json exists
-# after this script exits, including on a failing run.
+# after this script exits, including on a failing run. Never exit before the
+# trap below has written a reward (QG6).
 REWARD_DIR="${ODYSSEY_REWARD_DIR:-/logs/verifier}"
 SCORE_FILE="${ODYSSEY_SCORE_FILE:-/tmp/odyssey_score}"
 score="0.0000"

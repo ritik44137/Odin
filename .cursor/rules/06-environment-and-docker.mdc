@@ -1,0 +1,73 @@
+---
+description: Harbor environment and Dockerfile craft -- bake deps, silo tests, reserved paths
+alwaysApply: true
+---
+
+# Environment and Docker
+
+The image is the agent's universe. Build it so sealed rollout can run with
+`[agent] network_mode = "no-network"`. Runtime model:
+`docs/harbor-task-anatomy.md`. Quality bar: `docs/odyssey-quality-guidelines.md`.
+
+## What the Dockerfile must do
+
+```dockerfile
+FROM python:3.11-slim
+RUN pip install --no-cache-dir pytest==8.3.4
+WORKDIR /app
+COPY app/ /app/
+ENV PYTHONPATH=/app
+```
+
+- Pin the base tag. Prefer a digest (`@sha256:...`) when you have one; unpinned
+  `latest` is forbidden. Odyssey does not require Terminus's canonical ECR list.
+- Pin language packages to exact versions. Apt: `--no-install-recommends` and
+  clean lists in the same layer. No `apt-get upgrade`.
+- `WORKDIR /app`. Copy **only** `app/` (the starting state). Never `COPY tests/`
+  or `COPY solution/`. Never `COPY . /app`.
+- Bake every dependency the agent, oracle, and verifier need. `test.sh` and
+  `solve.sh` must not `pip install`, `npm i`, `apt-get`, `curl`, or `wget`.
+- Multi-stage is fine: keep compilers out of the runtime unless the agent must
+  compile. Prefer real files plus `COPY` over heredoc-inlined source.
+
+## Harbor reserved paths -- do not create them
+
+The Dockerfile must not `mkdir`, `COPY`, `ADD`, or `chown`:
+
+`/tests` `/solution` `/oracle` `/logs` `/logs/verifier` `/logs/agent`
+
+Harbor mounts those at runtime. Colliding with them fails the trial as infra.
+
+## What must not be in `environment/`
+
+- AI scaffolding: `CLAUDE.md`, `AGENTS.md`, `skills.md`, `.cursor/`, `.github/`
+  copilot files. The agent should look like a real repo, not an LLM workspace.
+- Secrets, `.env`, `.git`, caches, `__pycache__`.
+- Held-out fixtures, golden outputs, or a copy of the reference fix.
+- Opaque archives extracted in-layer to hide starting-state source.
+
+Spec/docs under `environment/app/` are realistic contracts, not solution guides.
+
+## Runtime network
+
+Image **build** may fetch packages. Agent **rollout** follows
+`[agent] network_mode`. `[environment].network_mode` is the Harbor runtime
+baseline, not docker-build networking. For a sealed task set environment,
+agent, and verifier all to `no-network`. Git clones at build, if any, pin a
+commit so later history cannot leak a fix.
+
+## Privileged and compose
+
+No `privileged: true`, no `docker.sock`, no `SYS_ADMIN`. If the objective
+truly needs several containers, ship compose and say so in the instruction and
+draft; most Odyssey tasks should be one Dockerfile.
+
+## Local check
+
+```bash
+docker build -t odyssey-task environment
+docker run --rm -it odyssey-task bash
+```
+
+Confirm `/app` has the starting state, `tests/` is absent, and the commands
+you will put in `solve.sh` actually run.

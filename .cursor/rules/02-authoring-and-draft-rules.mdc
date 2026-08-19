@@ -11,12 +11,15 @@ A valid Odyssey draft is not just complete; it is specific enough that a reviewe
 
 ## collectionFamily
 
-Choose the closest honest fit:
+Choose the closest honest fit. Collection-scale remaining work, not a ticket
+(`docs/odyssey-long-horizon.md`):
 
-- **Library clone**: reimplement a focused library or module to spec
-- **Product clone**: build a working slice of a real application
-- **ML engineering**: train, tune, evaluate, or wire up a model against a metric
-- **Algorithmic optimization**: preserve correctness while measurably improving speed or resource use
+- **Library clone**: reimplement a complete real library, compiler, decoder, interpreter, LSP, or control plane against a frozen spec or RFC
+- **Product clone**: clone a full application (APIs, persistence, auth, jobs, and the product surface)
+- **ML engineering**: train, post-train, port, or kernel-optimize a real model under a hard cap, or build a multi-dataset eval harness
+- **Algorithmic optimization**: beat a tight cycle/quality target on a substantial solver or custom-ISA kernel without breaking correctness
+
+Do not classify a parser feature, one workflow slice, or an eval-script repair as these families. That work fails Automated Difficulty as too short.
 
 Do not force novelty by misclassifying the task.
 
@@ -71,11 +74,22 @@ Explain the real-world engineering scenario the task represents. Ground the task
 
 ## difficultyExplanation
 
-Name the actual sources of difficulty: reasoning traps, interface ambiguities that must be resolved from code, performance tradeoffs, tricky invariants, failure modes, or exploit resistance. Never describe difficulty only as scale or time required.
+Name the actual sources of difficulty: the remaining-work surface (subsystems
+the oracle still has to build), what a frontier model gets wrong on the
+first attempt, which decoy or almost-correct algorithm it will try, and which
+hidden channel catches each. Never describe trap difficulty only as scale,
+file count, or hours. Never describe horizon only as "frontier models fail".
+Full design: `docs/odyssey-difficulty-design.md` and
+`docs/odyssey-long-horizon.md`.
 
 ## expertTimeEstimateHours
 
-Provide an honest end-to-end expert estimate. This is descriptive metadata and should not be tuned to game intake.
+Provide an honest end-to-end expert estimate of **remaining** work after
+reading `/app`. The Odyssey form still accepts any positive number. This
+repo's collection bar is **>= 40 hours**. Ticket-sized work with a padded
+number still fails Automated Difficulty (a 32h merge library was still too
+short). Do not tune the figure to game intake, and do not use it as a
+substitute for a first-attempt trap.
 
 ## environmentSummary
 
@@ -123,12 +137,17 @@ A strong draft should be:
 - difficult for frontier agents for the right reasons
 - internally consistent across objective, environment, resources, verifier, and exploits
 
+The draft must predict a Harbor bundle that can actually be built. Instruction
+craft, Docker siloing, oracle-derive-not-echo, and verifier integrity are in
+`.cursor/rules/05-instruction-writing.mdc`, `06-environment-and-docker.mdc`,
+`07-oracle-verifier-and-quality.mdc`, and `docs/harbor-task-anatomy.md`.
+
 # Hard constraints to remember
 
 - Draft text bounds are minimums, not quality targets.
-- The effective agent timeout must be at least 7200 seconds, and neither timeout may exceed 86400 seconds.
+- The effective agent timeout must be at least 7200 seconds (platform floor), and neither timeout may exceed 86400 seconds. The trial itself caps agent timeout at 37000 seconds; a request above that is rejected at intake. Collection-scale tasks budget **4-10 hours** (template 18000s); 7200s is not the collection target.
 - The whole trial — build, agent, verify, teardown — must fit within the 50400 second pool, so agent plus verifier must leave room for build and teardown.
-- Requested compute cannot exceed 8 CPUs, 65536 MB memory, and 40960 MB storage in the actual trial sandbox; above that the task is rejected at intake.
+- Requested compute cannot exceed 8 CPUs, 65536 MB memory, 40960 MB storage, or 37000s of agent timeout in the actual trial sandbox; above that the task is rejected at intake.
 - Open internet is not an accepted rollout mode.
-- `expertTimeEstimateHours` is descriptive metadata and is not a gate, so give an honest figure however large. The long-horizon requirement is enforced on the agent time budget instead.
+- `expertTimeEstimateHours` is unconstrained on the form. Locally, remaining work below 40 honest expert hours is treated as too short for the collection. Padding the number does not lengthen a ticket. Trap difficulty is a separate bar.
 - Draft fields and `instruction.md` must be keyboard-ASCII only; arrows, superscripts, and typographic dashes are rejected.

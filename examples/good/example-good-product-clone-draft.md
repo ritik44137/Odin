@@ -6,11 +6,11 @@ straight quotes). The Notes section is local scratch and has no form counterpart
 
 ## Title
 
-Implement offline invoice approval queue with retry-safe reconciliation
+Clone a code-review product with PRs, checks, and webhooks
 
 ## Working slug
 
-offline-invoice-approval-queue
+code-review-product-clone
 
 ## Collection family
 
@@ -26,55 +26,55 @@ programmatic
 
 ## Objective
 
-Implement an offline-capable invoice approval workflow in an existing web application slice. The agent must add queueing and reconciliation logic so approval actions created while disconnected are persisted locally, replayed safely when connectivity is restored, and reflected consistently in application state without duplicate approvals or lost updates. Done means the workflow behaves correctly across visible and hidden end-to-end scenarios covering offline creation, reconnect synchronization, replay idempotency, and UI-visible state consistency.
+Build a GitHub-like code review service from the product spec in /app/docs/product.md: repositories, pull requests, review comments and requested changes, required status checks, protected branches, identity and tokens, webhook delivery with retries, and a browser UI for the review workflow. Done means the HTTP API, persistence, background delivery, and UI-visible states all match the spec on visible flows and on hidden multi-actor, retry, and permission cases. This is a full-stack clone, not an offline approval queue bolted onto an existing app slice.
 
 ## Motivation
 
-This task stands in for realistic product engineering work where user actions must remain reliable across intermittent connectivity and where correctness depends on coordinating application state, persistence, and backend synchronization.
+Product-clone work in this collection is cloning a real application surface -- APIs, jobs, auth, and UI -- the way an engineer would stand up a competitor slice. A single reconnect-safe form is not that job.
 
 ## Difficulty explanation
 
-The task is difficult because it crosses multiple application layers. A shallow implementation can appear to work in a simple happy path while failing under reconnect races, duplicate replays, stale state hydration, or partial synchronization. The agent must reason about idempotency, queue lifecycle, state transitions, and user-visible consistency rather than only wiring a button to a request.
+The remaining work is several product subsystems that only succeed together: authz on protected branches, check rollup vs required contexts, review-comment identity, and at-least-once webhook delivery. The first-attempt trap is a CRUD PR store that passes the visible happy path while failing hidden permission, retry, and UI-state cases. A shallow UI patch without durable delivery still fails hidden groups.
 
 ## Expert time estimate (hours)
 
-8
+120
 
 ## Environment summary
 
-The sandbox contains a JavaScript application in /app with a backend stub, local persistence layer, and a visible subset of integration tests. Node.js, the package manager, and the required test tooling are preinstalled in the image. The task is fully offline at runtime, with all dependencies already baked into the environment.
+The image contains the product spec, a compiling skeleton (HTTP server, empty stores, stub UI), local mail/webhook sinks, and decoy billing routes off the graded path. Node or equivalent tooling is pinned and baked in. Runtime is sealed. The agent implements the service under /app.
 
 ## Resource estimate
 
 cpuMillis: 4000
-memoryMb: 4096
-storageMb: 4096
+memoryMb: 16384
+storageMb: 20480
 gpuCount: 0
-agentTimeoutSec: 7200
+agentTimeoutSec: 18000
 verifierTimeoutSec: 2400
 
 ## Network requirements
 
 mode: none
-justification: The task simulates connectivity transitions locally and does not require external hosts.
+justification: The task simulates webhook delivery locally and does not require external hosts.
 hosts: (none)
 
 ## Oracle strategy
 
-The reference solution implements a durable local approval queue, reconnect-aware replay logic, idempotent reconciliation against server acknowledgements, and UI state updates that remain consistent across refreshes and reconnect events. It also updates any integration seams needed so the verifier reaches full reward.
+The reference solution implements API handlers, durable stores, check rollup, protected-branch rules, and a retrying webhook worker, plus the UI states the spec names. It derives those behaviors from /app/docs/product.md rather than echoing held-out fixtures.
 
 ## Verification strategy
 
-The verifier runs visible workflow checks and hidden integration cases through tests/test.sh. Visible checks cover basic offline approval creation and later synchronization. Hidden checks add repeated reconnect cycles, duplicate replay attempts, stale local state, interleaved approvals, and UI-state consistency assertions. The verifier inspects persisted queue state, server-side reconciliation effects, and final user-visible outcomes so the task cannot pass through superficial UI patching alone.
+Visible checks cover open PR, one review, one check, one webhook. Hidden enumerated cases add permission denials, required-check failure, duplicate deliveries, and UI consistency after refresh. A generated group varies actors and retry schedules. Visible weight is a minority.
 
 ## Binary success condition
 
-The task passes only if the full verifier confirms correct offline persistence, replay safety, reconciliation behavior, and consistent final application state across visible and hidden scenarios.
+The task passes only if API, persistence, webhook delivery, and UI-visible state all pass visible and hidden groups.
 
 ## Partial score strategy
 
-Partial credit is awarded across workflow correctness groups such as offline capture, replay behavior, idempotent reconciliation, and state consistency. Hidden failures in replay safety or duplicate prevention reduce score sharply because they indicate product-breaking behavior.
+Independent weights for API correctness, authz, webhook delivery, and UI state. Hidden authz or delivery failures reduce score sharply.
 
 ## Anticipated exploits
 
-The agent may try to fake queue state in memory only, patch the visible UI without durable persistence, special-case visible reconnect scenarios, or suppress duplicate effects without true reconciliation logic. Hidden tests defeat this by forcing refreshes, varying operation order, replaying the same event multiple times, and inspecting both internal state and externally observable outcomes.
+The agent may fake webhook success in memory, special-case visible PR ids, or patch the UI without durable stores. Hidden retries, permission matrices, and generated actors defeat that.

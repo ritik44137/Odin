@@ -17,3 +17,4 @@ def _load(name: str):
 validator = _load("validate_odyssey_task")
 leaks = _load("scan_bundle_leaks")
 novelty = _load("check_novelty")
+difficulty = _load("check_difficulty_design")

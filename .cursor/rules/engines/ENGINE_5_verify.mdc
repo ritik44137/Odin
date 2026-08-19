@@ -1,0 +1,51 @@
+---
+description: ENGINE_5 verify -- oracle 1.0, NOP floor; do not ease tests
+alwaysApply: false
+---
+
+# ENGINE_5 -- Verify
+
+Oracle and NOP. Command: `/verify-task`.
+
+```bash
+scripts/preflight.sh --slug <slug> --with-oracle
+```
+
+Needs Docker. Exit 3 (daemon down) is infra, not a task fail.
+
+## Contract
+
+| Run | Required |
+|---|---|
+| Oracle (`solve.sh` then `test.sh`) | Full reward 1.0 |
+| NOP (untouched then `test.sh`) | Declared floor (often 0.0) |
+| Gap | Real. Oracle high and NOP high means the grader is wrong |
+
+`solve.sh` derives by editing `/app`. It does not echo goldens. Tests do not
+contain the solver. Identical tests for oracle and agent.
+
+## If oracle fails
+
+Fix `solve.sh`, Dockerfile, or absolute paths. **Do not** weaken hidden
+tests. **Do not** switch to ENGINE_8. Unsolvable oracle is a broken task,
+not a hard task.
+
+## If NOP is too high
+
+The starting state already scores. The grader is not measuring the work.
+Fix tests or the starting state. Do not "harden" by hiding the floor.
+
+## After oracle/nop pass
+
+Still run (or re-confirm) probes V/D/L/A. Solvable + easy is the failure
+mode ENGINE_8 exists for.
+
+## Required reply
+
+```text
+Engine: 5
+Oracle: <score>  NOP: <score>  (quote run_oracle_nop.py)
+Infra: no | docker unreachable
+Probes V/D/L/A: ...
+Ready for ENGINE_6: yes/no
+```

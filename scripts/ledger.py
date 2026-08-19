@@ -16,6 +16,7 @@ from typing import Dict, List
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import odyssey_draft as draft_codec  # noqa: E402
 import odyssey_paths as paths  # noqa: E402
 
 REPO_ROOT = paths.REPO_ROOT
@@ -67,7 +68,10 @@ def cmd_add(args: argparse.Namespace) -> int:
     if not args.draft.is_file():
         raise SystemExit(f"no draft at {paths.rel(args.draft)}")
 
-    draft = json.loads(args.draft.read_text(encoding="utf-8"))
+    try:
+        draft = draft_codec.load(args.draft)
+    except draft_codec.DraftError as exc:
+        raise SystemExit(str(exc))
     slug = draft.get("workingSlug")
     if not slug:
         raise SystemExit("draft has no workingSlug")

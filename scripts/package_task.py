@@ -9,9 +9,10 @@ only if they all pass.
 Gates, in order:
   1. draft and bundle structure, and consistency between the two
   2. anti-gaming leak scan
-  3. novelty against the local corpus
-  4. oracle and nop, with --with-oracle (needs Docker)
-  5. the archive is re-validated after it is written, since path safety and the
+  3. difficulty design (heuristic; does not replace the probe)
+  4. novelty against the local corpus
+  5. oracle and nop, with --with-oracle (needs Docker)
+  6. the archive is re-validated after it is written, since path safety and the
      512 MiB limit are properties of the archive rather than the directory
 """
 import argparse
@@ -107,6 +108,7 @@ def main() -> int:
         ("structure and consistency", [sys.executable, str(SCRIPTS / "validate_odyssey_task.py"),
                                        "--slug", slug, *strict]),
         ("anti-gaming leak scan", [sys.executable, str(SCRIPTS / "scan_bundle_leaks.py"), "--slug", slug, *strict]),
+        ("difficulty design", [sys.executable, str(SCRIPTS / "check_difficulty_design.py"), "--slug", slug]),
         ("novelty", [sys.executable, str(SCRIPTS / "check_novelty.py"), "--slug", slug]),
     ]
     if args.with_oracle:

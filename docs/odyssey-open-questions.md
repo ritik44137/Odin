@@ -105,3 +105,60 @@ declare the real floor, and make `partialScoreStrategy` state it explicitly.
 threshold of 0.55 chosen so the four example drafts read as distinct. The platform
 uses embeddings over the whole corpus, so a local pass says nothing about
 collisions with other authors' tasks. It only catches you duplicating yourself.
+
+## Terminal-Bench requirements this repo does not copy
+
+`terminal-bench-reference/` (Terminus) encodes Snorkel Terminal-Bench Edition 2
+policy. Several of those requirements are **not** Odyssey rules. The Harbor
+runtime model that *does* transfer is in `docs/harbor-task-anatomy.md`.
+
+**tmux and asciinema.** Terminus fails a pack if the final image lacks `tmux`
+and `asciinema`, because Snorkel records agent sessions that way. The Odyssey
+authoring guide does not mention them. Do not install them unless the task
+itself needs a terminal multiplexer.
+
+**Digest-pinned canonical ECR bases.** Terminus requires `@sha256:<digest>` on
+every `FROM` and a sanctioned ECR image. Odyssey requires a reproducible image
+with pinned package versions. Digest pinning is good practice, not a local gate.
+
+**Binary 0/1 reward.** Terminus writes `1` or `0`. Odyssey writes a float in
+`[0,1]` and keeps a separate binary gate (all groups pass). Harbor accepts either
+file format; this repo's templates use the float.
+
+**Nine taxonomy categories, rubrics, milestones, decoy counts.** Odyssey
+classifies with `collectionFamily` / `taskFamily` / `verifierFamily`. There is
+no rubric sidecar, no milestone `steps/` layout, and no required `decoys: N`
+CREATE prompt. Decoy files in `/app` are a difficulty mechanism (off the
+graded hot path); they are not a ritual count. See
+`docs/odyssey-difficulty-design.md`.
+
+**Mandatory ingest -> staging -> export.** Terminus required that pipeline on
+Go/Rust CLI tasks (Case 6). Copying it onto every Odyssey slug would fail
+similarity. Use the *mechanisms* (interaction, decoys, chained failure) in a
+shape native to the family.
+
+**Hard <= 20% / reject > 80%.** Those bands are Snorkel Terminal-Bench
+Welcome text. Odyssey's authoring guide only says the probe fails if a
+frontier agent saturates, or if the task is unsolvable. This repo does not
+treat 20% as an Odyssey published number. Design as if the agent must not
+one-shot the work.
+
+**Engines.** Numbered ENGINE_1-8 are a local authoring convention, adapted
+from Terminus so Cursor does not invent a lane. They are not an Odyssey
+platform API. Too-easy work goes to ENGINE_8 (structural mechanisms), not
+Terminus Case 6.
+
+## Difficulty probe vs local heuristic
+
+`scripts/check_difficulty_design.py` is a shape scan (recipe prompts, visible
+majority weight, interview exercises, ticket-sized remaining work). A PASS is
+not a probe pass. Author probes V/D/L/A are still mandatory.
+
+The Odyssey form still treats `expertTimeEstimateHours` as unconstrained
+metadata and 7200s as the agent-timeout floor. Observed Automated Difficulty
+verdicts (`Too short for the collection -- not long-horizon`) and
+SWE-Marathon's published envelope (40-400 expert hours, 2-10h agent, 5h
+template) are a **local collection bar**, recorded in
+`docs/odyssey-long-horizon.md` and enforced by `scripts/odyssey_horizon.py`.
+Padding hours or the clock on a ticket is not a substitute. Frontier-model
+failure is not a horizon argument.

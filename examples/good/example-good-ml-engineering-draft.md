@@ -6,11 +6,11 @@ straight quotes). The Notes section is local scratch and has no form counterpart
 
 ## Title
 
-Repair evaluation pipeline for fine-tuned classifier and recover held-out F1
+Train a molecular GNN under a 32 MB checkpoint cap
 
 ## Working slug
 
-repair-classifier-eval-pipeline-f1
+molecular-gnn-checkpoint-cap
 
 ## Collection family
 
@@ -18,7 +18,7 @@ ML engineering
 
 ## Task family
 
-debugging
+performance
 
 ## Verifier family
 
@@ -26,31 +26,31 @@ ml_artifact
 
 ## Objective
 
-Repair an existing training and evaluation pipeline for a fine-tuned text classifier so the produced model artifact and evaluation outputs achieve the required held-out F1 score without corrupting the training protocol. The agent must identify and fix the pipeline defects, preserve reproducibility, and generate the artifact expected by the verifier. Done means the repaired pipeline completes successfully in the provided environment and the resulting artifact clears the verifier's hidden quality threshold on held-out evaluation data.
+Train a graph neural net for molecular property prediction under the protocol in /app/docs/train.md: a 32 MB compressed-checkpoint cap, a frozen featurizer, and a held-out eval harness across 20 local datasets covering classification and regression. Done means the produced checkpoint loads under the cap, the training recipe is reproducible from /app, and held-out metrics clear the documented thresholds. This is training-under-cap plus a multi-dataset harness, not repairing a broken classifier eval script to recover F1.
 
 ## Motivation
 
-This task reflects real ML engineering work where the challenge is not inventing a model from scratch but repairing a broken training or evaluation path so a system once again produces trustworthy metrics and usable artifacts.
+ML engineering in this collection is standing up a real training and eval system with a hard resource cap, the way a lab would ship a constrained artifact. Debugging one pipeline flag is not that job.
 
 ## Difficulty explanation
 
-The difficulty lies in finding the real source of metric failure inside a multi-step ML pipeline. A weak model may blame the data, overfit visible metrics, or patch only surface-level scripts while leaving leakage, label handling, evaluation mismatch, or artifact packaging bugs unresolved. The hidden verifier can detect shallow fixes because it evaluates the actual produced artifact and held-out performance, not just whether training ran.
+The remaining work is data plumbing, model capacity under the byte cap, training schedule, and an eval harness that must not leak. The first-attempt trap is overfitting the visible dataset or emitting a checkpoint that reports metrics without fitting under 32 MB after the verifier's compressor. Hidden datasets and a reseal of the checkpoint catch that. Frontier-model struggle on a tiny eval-repair ticket would not make that ticket long-horizon.
 
 ## Expert time estimate (hours)
 
-8
+60
 
 ## Environment summary
 
-The sandbox contains a Python ML project in /app with local training data, validation data, a broken training/evaluation pipeline, and the necessary libraries preinstalled in the image. GPU is not required. The task is fully offline and all model assets and datasets are bundled locally.
+The image has local datasets, a pinned ML stack, the training protocol, a skeleton trainer, and a dummy baseline that misses the cap or the metric. GPU is optional per the draft envelope. Runtime is sealed. Held-out eval data used by the grader is not in /app.
 
 ## Resource estimate
 
-cpuMillis: 6000
-memoryMb: 8192
-storageMb: 8192
+cpuMillis: 8000
+memoryMb: 32768
+storageMb: 20480
 gpuCount: 0
-agentTimeoutSec: 10800
+agentTimeoutSec: 28800
 verifierTimeoutSec: 3600
 
 ## Network requirements
@@ -61,20 +61,20 @@ hosts: (none)
 
 ## Oracle strategy
 
-The reference solution identifies the pipeline defects, corrects preprocessing and evaluation alignment, retrains or re-runs the pipeline as needed, and produces the model artifact and outputs expected by the verifier. The solved pipeline is reproducible and reaches the held-out threshold reliably within the declared resource budget.
+The reference solution trains a model that fits the cap, writes the checkpoint to the required path, and records the recipe. It does not copy held-out scores into the artifact.
 
 ## Verification strategy
 
-The verifier runs the training and evaluation pipeline through tests/test.sh, validates that the expected artifact is produced, checks reproducibility-sensitive outputs, and evaluates the final model on hidden held-out data. Visible checks expose the expected artifact shape and representative metric reporting. Hidden checks verify the decisive held-out F1 threshold, guard against leakage and output spoofing, and ensure the task is solved by producing a valid model artifact rather than by printing fabricated metrics.
+Visible checks confirm a loadable checkpoint and metric reporting on a public split. Hidden checks evaluate the resealed checkpoint on held-out datasets and enforce the 32 MB cap after the verifier's compressor. Visible weight is a minority.
 
 ## Binary success condition
 
-The task passes only if the repaired pipeline produces the required model artifact and clears the hidden held-out F1 threshold under the verifier.
+The task passes only if the checkpoint is under the cap and clears hidden held-out thresholds on the harness.
 
 ## Partial score strategy
 
-Partial credit is awarded for producing a valid artifact and improving held-out performance toward the target, with higher weight on genuine metric recovery than on superficial pipeline cleanup. Fabricated or non-reproducible metric outputs receive no credit.
+Partial credit for a valid artifact and for metric progress toward the threshold. Fabricated metrics receive no credit.
 
 ## Anticipated exploits
 
-The agent may try to print expected metrics, bypass true evaluation, leak labels into the pipeline, or emit a placeholder artifact. The verifier defeats these by rerunning evaluation on held-out data, checking artifact structure and behavior, and validating that reported metrics correspond to the actual produced model.
+The agent may print expected metrics, leak labels, or ship an oversized checkpoint. The verifier reseals the file, reruns eval on held-out data, and measures compressed size.

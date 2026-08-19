@@ -13,6 +13,7 @@ def scan(bundle: Path):
     files = leaks.read_bundle(bundle)
     findings = leaks.Findings()
     leaks.check_dockerfile(files, findings)
+    leaks.check_ai_scaffolding(files, findings)
     leaks.check_duplicate_content(files, findings)
     leaks.check_instruction_leaks(files, findings)
     leaks.check_verifier_surface(files, findings)
@@ -109,6 +110,44 @@ class TestLeakScanner:
         findings = scan(bundle)
         assert findings.errors == []
         assert any("compiled Python artifacts" in w for w in findings.warnings)
+
+    def test_dockerfile_template_does_not_trip_reserved_paths(self):
+        text = (REPO_ROOT / "templates" / "odyssey-dockerfile.template").read_text(encoding="utf-8")
+        findings = leaks.Findings()
+        leaks.check_dockerfile({"environment/Dockerfile": text.encode("utf-8")}, findings)
+        assert findings.errors == [], findings.errors
+
+    def test_dockerfile_reserved_path_is_an_error(self, tmp_path):
+        bundle = make_bundle(tmp_path / "bundle")
+        (bundle / "environment" / "Dockerfile").write_text(
+            "FROM python:3.11-slim\nWORKDIR /app\nRUN mkdir -p /tests\n", encoding="utf-8"
+        )
+        findings = scan(bundle)
+        assert any("Harbor reserved path" in e for e in findings.errors)
+
+    def test_ai_scaffolding_in_environment_is_an_error(self, tmp_path):
+        bundle = make_bundle(
+            tmp_path / "bundle",
+            extra={"environment/app/CLAUDE.md": "# helper\n" + ("x" * 80)},
+        )
+        findings = scan(bundle)
+        assert any("AI scaffolding" in e for e in findings.errors)
+
+    def test_runtime_fetch_in_test_sh_warns(self, tmp_path):
+        bundle = make_bundle(tmp_path / "bundle")
+        (bundle / "tests" / "test.sh").write_text(
+            TEST_SH + "curl -sSL https://example.com/cases.json -o /tmp/c.json\n", encoding="utf-8"
+        )
+        findings = scan(bundle)
+        assert any("fetch or install" in w for w in findings.warnings)
+
+    def test_oracle_split_in_test_sh_warns(self, tmp_path):
+        bundle = make_bundle(tmp_path / "bundle")
+        (bundle / "tests" / "test.sh").write_text(
+            TEST_SH + 'if [ -n "${EVAL_IS_ORACLE:-}" ]; then chmod 777 /app; fi\n', encoding="utf-8"
+        )
+        findings = scan(bundle)
+        assert any("identical tests" in w for w in findings.warnings)
 
     def test_zip_with_nested_root_is_read(self, tmp_path):
         import zipfile

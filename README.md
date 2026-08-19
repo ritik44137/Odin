@@ -53,7 +53,8 @@ mistakes have to be caught locally.
    ```
 
 5. Fill the bundle plan, then implement `tasks/<slug>/` from
-   `examples/reference-bundle/`.
+   `examples/reference-bundle/` in Harbor order: instruction, `task.toml`,
+   environment, oracle, tests. Runtime model: `docs/harbor-task-anatomy.md`.
 6. Preflight, prove a visible-only patch still fails, package, and record:
 
    ```bash
@@ -89,7 +90,12 @@ Keep the same slug. Never fork to a new one to escape a failing gate.
 A byte-identical ZIP is blocked by content hash, so the revision must be
 substantive. `scripts/ledger.py add` refuses a hash it has already seen.
 
+Too easy after a solvable oracle: run **harden-task** (ENGINE_8), not more
+pytest. Self-review: **audit-task**. Oracle/NOP only: **verify-task**. Zip:
+**package-task** only.
+
 Full loop, including the anti-gaming shallow-patch check: `docs/odyssey-authoring-loop.md`.
+Engine map: `docs/odyssey-engines.md`.
 
 ## One slug, four locations
 
@@ -115,7 +121,7 @@ automatically. Each funnel stage has a local counterpart:
 | Similarity / dedup | `scripts/check_novelty.py`, `scripts/ledger.py` |
 | Oracle & nop | `scripts/run_oracle_nop.py` |
 | Quality check | `scripts/validate_odyssey_task.py`, `scripts/scan_bundle_leaks.py` |
-| Difficulty probe | no local substitute -- this is a judgement call |
+| Difficulty probe | no local substitute -- design horizon and traps in; `scripts/check_difficulty_design.py` is a heuristic only |
 | Synthesis | nothing to check: it confirms earlier stages |
 | Human review | `docs/odyssey-reviewer-notes.md` |
 
@@ -126,17 +132,25 @@ archive afterwards.
 
 ## What this repo encodes
 
-1. **Rules** in `.cursor/rules/` that Cursor always obeys while authoring.
-2. **Commands** in `.cursor/commands/` for creating and revising tasks.
+1. **Rules** in `.cursor/rules/` that Cursor always obeys while authoring,
+   including the engine router (`09-engine-router.mdc`) and on-demand
+   ENGINE_1 through ENGINE_8.
+2. **Commands** in `.cursor/commands/` for creating, revising, hardening,
+   auditing, verifying, and packaging tasks.
 3. **Schema** in `schemas/`, the single source of truth for draft bounds.
-4. **Templates** for the draft, `task.toml`, instructions, verifier, reference
-   solution, and bundle plan.
+4. **Templates** for the draft, `task.toml`, instructions, Dockerfile, verifier,
+   reference solution, and bundle plan.
 5. **Examples**: strong drafts per collection family, weak-authoring
    counterexamples, and a complete working bundle in
    `examples/reference-bundle/`.
 6. **Tooling** in `scripts/`, one script per funnel stage, plus `preflight.sh`
    and `package_task.py`.
-7. **Process docs** in `docs/`, including `odyssey-repo-layout.md` and
+7. **Process docs** in `docs/`, including `odyssey-repo-layout.md`,
+   `harbor-task-anatomy.md` (how Harbor actually runs the ZIP),
+   `odyssey-quality-guidelines.md` (file-level QG and common errors),
+   `odyssey-difficulty-design.md` (how to design for the probe),
+   `odyssey-long-horizon.md` (collection-scale remaining work),
+   `odyssey-engines.md` (Terminus-shaped workflow, difficulty first), and
    `odyssey-open-questions.md`.
 
 ## Conventions

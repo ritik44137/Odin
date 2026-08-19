@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+# Pin every dependency. The rollout is sealed; there is no network later.
+# Image build may fetch packages. Copy only app/. Do not copy tests/ or
+# solution/, and do not create Harbor reserved directories.
+RUN pip install --no-cache-dir pytest==8.3.4
+
+WORKDIR /app
+
+# Only the starting state. Held-out tests and the reference fix stay outside
+# the image so /app cannot reveal them.
+COPY app/ /app/
+
+ENV PYTHONPATH=/app

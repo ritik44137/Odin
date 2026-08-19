@@ -19,6 +19,10 @@ cd /app
 #
 # Prefer applying a checked-in patch or copying prepared source files over
 # inlining a large heredoc, so the reference stays reviewable.
+#
+# Derive the answer. Do not echo held-out goldens:
+#   GOOD: python /app/calculate.py > /app/output/result.txt
+#   BAD:  echo "42" > /app/output/result.txt
 # ---------------------------------------------------------------------------
 
 SOLUTION_DIR="$(cd "$(dirname "$0")" && pwd)"

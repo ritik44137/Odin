@@ -1,0 +1,50 @@
+---
+description: Odyssey engine router -- pick ENGINE_1-8 from the paste; difficulty first
+alwaysApply: true
+---
+
+# Engine router
+
+Terminus used numbered engines (ideas, create, audit, verify, zip, revise)
+plus a paste router so the agent did not invent a lane. Odin does the same.
+Always-on rules (00-08) still apply. **Read** exactly one file from
+`.cursor/rules/engines/` before acting. Do not load all of them.
+
+Difficulty is the default concern in every engine. A green structure check
+is not a ready task. A frontier-model failure is not a horizon argument.
+
+## Route (order wins top to bottom)
+
+Read the user paste literally. Do not invent "too easy" or "unsolvable".
+
+| If the paste is... | Engine | Forbidden |
+|---|---|---|
+| Oracle failed / reward 0 / solve.sh broken | **5** then oracle-only fix | Harden, add hints, rewrite tests to match a bad oracle |
+| Not solvable / unfair tests / missing spec | **7 lane F** fairness only | Harden-by-secret-rules, instruction recipes |
+| Probe saturated / too easy / visible-only would pass / agents one-shot | **8 harden** | More pytest on the same bug, hash fields, recipes in instruction |
+| Reviewer comments and the task is still solvable | **7 lane R** triage FIX/IGNORE | Easing hidden tests to silence a nit |
+| Raw idea / "create a task" | **1** then **3** | Building before the idea names a first-attempt trap **and** collection-scale remaining work |
+| Novelty / similar to an old slug | **2** | Renaming as novelty |
+| Audit / self-review before zip | **4** | Claiming ready without probes V/D/L/A |
+| Oracle/nop / preflight | **5** | Skipping NOP |
+| Package / zip / upload | **6** | Hand-rolled zip |
+| Revise, unclear lane | **7** (re-route) | Guessing ENGINE_8 because chat said "harder" |
+
+One paste, one engine. Conflicts: oracle -> fairness -> too-easy -> reviewer -> create.
+
+## Commands
+
+| User command | Engine |
+|---|---|
+| `/create-task` | 1 then 3 |
+| `/revise-task` | 7 |
+| `/harden-task` | 8 |
+| `/audit-task` | 4 |
+| `/verify-task` | 5 |
+| `/package-task` | 6 |
+
+## Outcome contract (every engine)
+
+After the work: oracle 1.0, NOP at the declared floor, `check_difficulty_design.py`
+has no ERROR, probes V/D/L/A still fail hidden groups, instruction has no recipe.
+Never "ready" because hours are large or pytest count is large.

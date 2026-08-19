@@ -88,7 +88,7 @@ class TestMarkdownDraftCodec:
     def test_template_parses(self):
         draft = odyssey_draft.parse_markdown(TEMPLATE.read_text(encoding="utf-8"))
         assert draft["collectionFamily"] == "Library clone"
-        assert draft["resourceEstimate"]["agentTimeoutSec"] == 7200
+        assert draft["resourceEstimate"]["agentTimeoutSec"] == 18000
         assert draft["networkRequirements"]["mode"] == "none"
 
     def test_local_drafts_validate_if_present(self):

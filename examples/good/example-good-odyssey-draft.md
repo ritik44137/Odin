@@ -6,11 +6,11 @@ straight quotes). The Notes section is local scratch and has no form counterpart
 
 ## Title
 
-Rebuild strict TOML parsing for nested inline tables
+Reimplement a Postgres wire-protocol frontend and planner subset
 
 ## Working slug
 
-strict-toml-nested-inline-tables
+postgres-wire-frontend-planner
 
 ## Collection family
 
@@ -26,31 +26,31 @@ programmatic
 
 ## Objective
 
-Implement support for strict parsing and validation of nested inline tables in an existing TOML parser library. The agent must update the parser so it accepts valid nested inline-table constructs, rejects malformed or duplicate-key variants with precise failure behavior, and preserves compatibility with the rest of the parser API. Done means the updated parser passes both visible regression tests and hidden conformance cases that exercise nested structures, duplicate keys, whitespace normalization, and mixed table syntax interactions.
+Rebuild a PostgreSQL-compatible frontend and a constrained query planner from the frozen spec in /app/docs/protocol.md and /app/docs/planner.md. Remaining work is a complete protocol stack, not a parser feature: startup and authentication, simple-query mode, the extended parse/bind/execute/describe/close cycle, COPY in and out, listen/notify, error fields, and a planner that produces the documented join order, parameter types, and catalog lookups against /app/catalog. Done means a client speaking the wire protocol through the public socket in /app can complete held-out sessions, and the planner matches the spec on generated catalogs rather than on the visible examples.
 
 ## Motivation
 
-This task stands in for real maintenance work on a configuration parsing library where edge-case correctness matters because downstream systems depend on deterministic parsing semantics and clear failures on invalid input.
+This is the shape of reproducing a production frontend: an agent has to implement an entire protocol and planner against a spec and a catalog, then keep them coherent under session reuse. It stands in for library-clone work that takes an expert days, not a nested-syntax ticket in an existing parser.
 
 ## Difficulty explanation
 
-The difficulty is not just adding syntax support. The agent must reason about parser state transitions, duplicate-key semantics across nested scopes, and compatibility with existing behavior. Naive fixes often pass happy-path examples while breaking error handling, key shadowing rules, or mixed parsing of regular tables and inline tables. The hidden tests can detect shallow patches that only special-case obvious samples.
+The remaining surface is several interacting subsystems (startup, simple query, extended protocol, COPY, notify, planner). The first-attempt trap is treating extended protocol as a wrapper around simple query and planning only the visible join shapes. That passes a short happy-path session and fails hidden bind/execute mismatch, portal reuse, COPY boundary framing, and generated catalogs whose statistics change join order. Padding hours on a single parse function would not create this surface.
 
 ## Expert time estimate (hours)
 
-6
+80
 
 ## Environment summary
 
-The sandbox contains a small parser codebase in /app written in Python with pytest preinstalled. The working tree includes the parser implementation, a subset of visible tests, and developer notes describing high-level TOML compliance expectations. No runtime network access is needed. The agent edits the library locally and runs tests in the containerized environment.
+The sandbox is a pinned language image with the protocol spec, catalog fixtures, a compiling skeleton (socket accept loop, stub message codec, empty planner), and decoy admin utilities that are not on the graded path. Dependencies are baked in. Runtime network is sealed; the agent speaks the protocol on a local socket. No tests or solution files are in the image.
 
 ## Resource estimate
 
 cpuMillis: 4000
-memoryMb: 4096
-storageMb: 2048
+memoryMb: 16384
+storageMb: 20480
 gpuCount: 0
-agentTimeoutSec: 7200
+agentTimeoutSec: 18000
 verifierTimeoutSec: 1800
 
 ## Network requirements
@@ -61,20 +61,20 @@ hosts: (none)
 
 ## Oracle strategy
 
-The reference solution updates the parser grammar and validation logic for inline tables, adds recursive handling for nested inline structures, enforces duplicate-key checks across nested scopes, and preserves existing public API behavior. The solution also includes regression coverage to ensure hidden and visible cases reach full reward.
+The reference solution implements the message codec, session state machine, extended-protocol portals, COPY framing, notify delivery, and the planner described by the spec, then copies those sources into /app. It derives behavior from the spec and catalog, and does not echo held-out session transcripts.
 
 ## Verification strategy
 
-The verifier runs tests/test.sh, which executes visible regression tests plus held-out cases. Visible tests show the required public behavior for valid nested inline tables and representative invalid inputs. Hidden tests cover additional malformed variants, tricky duplicate-key interactions, table-order edge cases, and API compatibility checks. Success depends on parser behavior and failure semantics, not on matching a specific implementation.
+The verifier runs tests/test.sh. Visible checks drive a short simple-query plus one extended-protocol session so the agent can aim. Hidden enumerated sessions cover bind/execute reuse, COPY, notify, and error fields the visible set does not contain. A generated hidden group builds catalogs and parameter sequences so a hard-coded transcript cannot pass. Visible weight is a minority of the float.
 
 ## Binary success condition
 
-The task passes only if the full verifier suite completes successfully with no failing visible or hidden cases.
+The task passes only if the full verifier suite completes successfully: visible sessions, hidden sessions, and generated catalog/planner cases all pass.
 
 ## Partial score strategy
 
-Partial credit is awarded by percentage of verifier checks passed, with core correctness groups weighted more heavily than minor compatibility checks. Hidden failures in duplicate-key or malformed-input categories reduce score materially because they indicate shallow or unsafe fixes.
+Partial credit is awarded by independently weighted groups (visible sessions, hidden protocol cases, generated planner cases). Protocol failures and planner failures are separate channels. Score rises only with real subsystem progress.
 
 ## Anticipated exploits
 
-The agent may try to special-case only the visible examples, bypass duplicate-key validation, or weaken error handling so malformed inputs parse silently. The hidden tests defeat this by varying syntax shapes, key orders, spacing, and mixed table forms. Because the verifier checks parser behavior through the public API on unseen inputs, hard-coding known outputs is ineffective.
+The agent may implement only simple query, special-case visible sessions, or plan only the sample catalog. Hidden sessions and generated catalogs defeat that. Hard-coding transcripts fails because generated inputs change. Editing the verifier fails because tests/ is not in the image.

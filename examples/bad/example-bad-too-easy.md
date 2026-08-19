@@ -35,9 +35,10 @@ all the edge cases right takes care.
 
 ## Why "add more requirements" does not fix it
 
-Bolting on thread-safety, a TTL, and metrics makes the task longer without making
-it harder: each addition is independently well-known, so the agent solves four easy
-problems in sequence. Scale is not difficulty.
+Scale is not trap difficulty. Padding hours on an LRU cache still saturates.
+A 40-hour complete-system clone is a different bar (horizon); see
+`examples/bad/example-bad-too-short-horizon.md` and
+`docs/odyssey-long-horizon.md`.
 
 ## Better pattern
 

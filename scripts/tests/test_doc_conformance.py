@@ -133,6 +133,8 @@ class TestResourceBounds:
         assert validator.SANDBOX_CPUS == 8
         assert validator.SANDBOX_MEMORY_MB == 65536
         assert validator.SANDBOX_STORAGE_MB == 40960
+        # Platform trial cap on agent timeout (form maximum remains 86400).
+        assert validator.SANDBOX_AGENT_TIMEOUT_SEC == 37000
 
     def test_bundle_size_limit(self):
         # "a single application/zip archive (up to 512 MiB compressed)"
@@ -149,6 +151,7 @@ class TestBundleContract:
         for name in (
             "odyssey-task-toml.template.toml",
             "odyssey-instruction.template.md",
+            "odyssey-dockerfile.template",
             "odyssey-test.template.sh",
             "odyssey-solve.template.sh",
             "odyssey-task-draft.template.md",
@@ -170,6 +173,7 @@ class TestBundleContract:
         assert env["memory_mb"] <= validator.SANDBOX_MEMORY_MB
         assert env["storage_mb"] <= validator.SANDBOX_STORAGE_MB
         assert parsed["agent"]["timeout_sec"] >= 7200
+        assert parsed["agent"]["timeout_sec"] <= validator.SANDBOX_AGENT_TIMEOUT_SEC
         assert parsed["agent"]["timeout_sec"] + parsed["verifier"]["timeout_sec"] <= validator.TRIAL_POOL_SEC
 
     def test_task_toml_template_seals_the_rollout(self):
@@ -187,6 +191,7 @@ class TestBundleContract:
         assert resource["memoryMb"] <= validator.SANDBOX_MEMORY_MB
         assert resource["storageMb"] <= validator.SANDBOX_STORAGE_MB
         assert resource["agentTimeoutSec"] >= 7200
+        assert resource["agentTimeoutSec"] <= validator.SANDBOX_AGENT_TIMEOUT_SEC
         assert draft["networkRequirements"]["mode"] == "none"
 
     def test_draft_template_default_families_are_valid(self):

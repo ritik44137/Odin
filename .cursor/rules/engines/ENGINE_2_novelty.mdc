@@ -1,0 +1,30 @@
+---
+description: ENGINE_2 novelty -- conceptual novelty, not renaming
+alwaysApply: false
+---
+
+# ENGINE_2 -- Novelty
+
+Use when the user asks "is this too close to X" or after ENGINE_1 before
+heavy implementation.
+
+```bash
+python3 scripts/check_novelty.py --slug <slug>
+```
+
+A high local score means change the **problem**, not the wording. The local
+check only sees this machine's `drafts/`. Also ask: would a frontier model
+treat this as a named exercise?
+
+Difficulty angle: a reskin of a saturated bug lattice (checksum + staging +
+export, LRU, parser-from-spec-only) is both a novelty fail and a difficulty
+fail. Do not "unique-ify" by swapping domain nouns onto the same traps.
+
+## Required reply
+
+```text
+Engine: 2
+Nearest local draft: <slug> score=<n>
+Conceptual overlap: <what is the same engineering problem>
+Change if too close: <new trap / new interface / new family-native work>
+```

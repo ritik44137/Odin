@@ -1,0 +1,103 @@
+---
+description: Odyssey difficulty design -- probe, decoys, grader weights, probes V/D/L/A
+alwaysApply: true
+---
+
+# Difficulty design
+
+The difficulty probe is the funnel stage with no local substitute. It fails
+in two different ways: **too easy** (a frontier agent saturates the work)
+and **too short / not long-horizon** (remaining work is a ticket, even if
+the agent scores 0.0). Design both at the idea stage.
+
+Full write-up: `docs/odyssey-difficulty-design.md` and
+`docs/odyssey-long-horizon.md`. Heuristic gate:
+`python3 scripts/check_difficulty_design.py --slug <slug>`.
+
+Hours, file count, and pytest count are not trap difficulty. They also do
+not create horizon: padding `expertTimeEstimateHours` or `timeout_sec` on a
+focused module still fails Automated Difficulty as too short.
+
+## Target
+
+A frontier coding agent must not one-shot the task at the full time budget,
+and a human expert must still be able to solve it from `/app` plus
+`instruction.md`. Remaining work must be a **complete system** in the
+declared family (honest expert estimate >= 40 hours, agent budget 4-10h).
+Unsolvable is not hard. Missing spec, contradictory tests, and broken
+images are fairness bugs: fix them without adding recipes. Frontier-model
+failure is not a horizon argument.
+
+## Mechanisms (required thinking, not a copied pipeline)
+
+Do **not** stamp ingest -> staging -> export onto every slug. That shape is
+how whole corpora went TRIVIAL together. Use the mechanisms:
+
+1. **Interaction.** Fixing one module or one stage still fails hidden checks.
+2. **Decoys.** At least one obvious file or doc is off the graded hot path
+   whenever `/app` has several plausible modules. A decoy-only patch must
+   fail hidden groups. A file the tests require is not a decoy.
+3. **Independent hidden traps.** Hidden failure mode != visible failure mode.
+   Still inside the stated `/app` contract; vary inputs, do not invent secret
+   rules.
+4. **Almost-correct trap.** A plausible wrong algorithm passes some visible
+   checks and fails hidden.
+5. **Generated / property hidden cases.** Enumerated fixtures are not enough.
+6. **Contracts in `/app`, scenario in `instruction.md`.** No numbered fix
+   list, no bug file names, no golden values.
+7. **Hidden majority of reward.** Visible group weight must be < 50% of
+   `tests/test.sh` total (aim ~30%). The probe sees the float. A visible-only
+   patch that scores 0.70 looks saturated.
+
+## Grader and tests
+
+- Visible: aiming, minority weight.
+- Hidden enumerated: different cases, not restatements.
+- Hidden invariants/generated: separate group, separate weight.
+- Binary gate: all groups. Partial score monotone with real progress.
+- Grade public behavior from a directory the agent does not control.
+- No solver in `tests/`. No `EVAL_IS_ORACLE`. No p50 latency as fake hard.
+- 35 tests of one bug still saturate. Prefer independent channels.
+
+## Probes the author must run (not optional)
+
+| Probe | Patch | Must still fail |
+|---|---|---|
+| V | smallest visible-only change | hidden groups; binary gate |
+| D | decoy file(s) only | hidden / hot-path groups |
+| L | one module or first stage only | later hidden groups |
+| A | plausible wrong algorithm | hidden reference |
+
+Probe V is already the anti-gaming shallow-patch check. If V, D, or L fully
+pass, do not zip.
+
+## Forbidden "hardening"
+
+More pytest on the same path. New hash fields on the same bugs. Relabeling
+prose. Putting the recipe into `instruction.md` because a reviewer asked.
+Hidden tests that share the visible root cause.
+
+## `difficultyExplanation`
+
+Name the remaining-work surface (subsystems still to build) **and** what a
+strong model gets wrong on the first attempt, which decoy it will patch,
+which almost-correct algorithm it will try, and which hidden channel catches
+each. "Frontier models fail" is not a horizon argument. If the remaining-work
+paragraph cannot be written, the idea is too short. If the trap paragraph
+cannot be written, the idea is not ready.
+
+## Which engine
+
+| Situation | Engine |
+|---|---|
+| If the idea has no first-attempt trap **or** is ticket-sized | 1 -- refuse to scaffold |
+| Building a new bundle | 3 -- hard-first CREATE |
+| Solvable but too easy | 8 -- structural harden |
+| Unsolvable / unfair | 7 lane F -- fairness, no recipes |
+| Reviewer nits on a still-hard task | 7 lane R -- do not ease |
+
+## Reviewer feedback
+
+Fairness (docs match tests, oracle 1.0) is required. Hints, bug locations,
+and golden outputs in `instruction.md` are rejected even when requested:
+they bounce the next probe to easy.

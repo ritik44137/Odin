@@ -178,17 +178,22 @@ class TestDraft:
         assert any("deny-all plus the model endpoint" in w for w in result.warnings)
 
     def test_trial_pool_ceiling_is_an_error(self, draft, schema):
-        draft["resourceEstimate"]["agentTimeoutSec"] = 50000
-        draft["resourceEstimate"]["verifierTimeoutSec"] = 1000
+        draft["resourceEstimate"]["agentTimeoutSec"] = 37000
+        draft["resourceEstimate"]["verifierTimeoutSec"] = 14000
         result = validator.validate_draft(draft, schema)
         assert any("per-trial pool" in e for e in result.errors)
 
     def test_build_reserve_warns_before_the_ceiling(self, draft, schema):
-        draft["resourceEstimate"]["agentTimeoutSec"] = 49000
-        draft["resourceEstimate"]["verifierTimeoutSec"] = 1000
+        draft["resourceEstimate"]["agentTimeoutSec"] = 37000
+        draft["resourceEstimate"]["verifierTimeoutSec"] = 12000
         result = validator.validate_draft(draft, schema)
         assert result.errors == []
         assert any("image build and teardown" in w for w in result.warnings)
+
+    def test_agent_timeout_above_platform_cap_is_an_error(self, draft, schema):
+        draft["resourceEstimate"]["agentTimeoutSec"] = 37001
+        result = validator.validate_draft(draft, schema)
+        assert any("trial agent timeout cap" in e for e in result.errors)
 
     def test_allowlist_requires_hosts(self, draft, schema):
         draft["networkRequirements"] = {
@@ -358,7 +363,7 @@ class TestBundleContents:
         assert not any("milliCPU" in e for e in result.errors)
 
     def test_memory_above_draft_rejected(self, tmp_path, draft):
-        toml = TASK_TOML.replace("memory_mb = 4096", "memory_mb = 8192")
+        toml = TASK_TOML.replace("memory_mb = 4096", "memory_mb = 32768")
         bundle = make_bundle(tmp_path / "bundle", task_toml=toml)
         files, _ = validator.read_bundle(bundle)
         result = validator.validate_bundle(files, draft)

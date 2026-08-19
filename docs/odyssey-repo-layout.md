@@ -42,6 +42,12 @@ tasks/<slug>/
     └── solve.sh        the reference entrypoint the oracle runs
 ```
 
+Harbor builds the image from `environment/`, gives the agent `/app` and
+`instruction.md`, and mounts `tests/` only at grade time. It reserves `/tests`,
+`/solution`, `/oracle`, and `/logs/verifier` -- the Dockerfile must not create
+those paths. The runtime model, reserved paths, and in-bundle authoring order
+are in `docs/harbor-task-anatomy.md`.
+
 Do not put notes, scratch files, or planning documents here — they would be shipped
 inside a graded bundle. That is why the bundle plan lives in `plans/` instead.
 `package_task.py` drops `__pycache__`, `.gitkeep`, and editor droppings when it
@@ -53,8 +59,9 @@ The steps are ordered because each one depends on the last, and because the plat
 submits a bundle automatically once inspection passes it. There is no later point at
 which a mistake can be caught.
 
-1. **Idea.** State the engineering problem, and classify it into a collection
-   family, task family, and verifier family.
+1. **Idea.** State the engineering problem, classify it, name collection-scale
+   remaining work (>= 40 honest expert hours, complete system), and name the
+   first-attempt trap (ENGINE_1). Do not scaffold a ticket.
 2. **Slug.** Choose a lowercase-kebab slug that describes the core engineering
    problem, not the domain dressing. This is the last chance to pick it.
 3. **Scaffold.** `python3 scripts/new_task.py --slug <slug>` creates the draft, the
@@ -69,20 +76,27 @@ which a mistake can be caught.
 6. **Validate the draft.** `python3 scripts/validate_odyssey_task.py --slug <slug>`.
 7. **Plan the bundle.** Fill `plans/<slug>.md` so the future archive is designed
    before it is built, including the visible/hidden split and the oracle path.
-8. **Implement.** Build out `tasks/<slug>/`, keeping held-out material out of the
-   image.
+8. **Implement.** Build out `tasks/<slug>/` in this order, keeping held-out
+   material out of the image: `instruction.md`, `task.toml`, `environment/`,
+   `solution/solve.sh`, `tests/` (visible then hidden). File-level craft is in
+   `docs/harbor-task-anatomy.md`, `docs/odyssey-quality-guidelines.md`, and
+   `docs/odyssey-difficulty-design.md`. Hidden groups must dominate the score.
 9. **Preflight.** `scripts/preflight.sh --slug <slug> --with-oracle`. The oracle and
-   nop pair must have passed at least once before upload.
-10. **Package.** `python3 scripts/package_task.py --slug <slug> --with-oracle`. This
+   nop pair must have passed at least once before upload. Difficulty-design
+   ERRORs (recipe instruction, visible-majority weight, ticket-sized remaining
+   work) must be clean.
+10. **Probes V/D/L/A.** Visible-only, decoy-only, one-layer, and almost-correct
+    patches must still fail hidden groups.
+11. **Package.** `python3 scripts/package_task.py --slug <slug> --with-oracle`. This
     re-runs every gate, writes `zip/<slug>.zip` only if they all pass, then
     validates the archive itself and deletes it if that fails.
-11. **Record.** `python3 scripts/ledger.py add --slug <slug>` stores the archive's
+12. **Record.** `python3 scripts/ledger.py add --slug <slug>` stores the archive's
     SHA-256, so a later byte-identical resubmission is caught locally rather than by
     the platform's content hash.
-12. **Close the loop.** When the verdict arrives,
+13. **Close the loop.** When the verdict arrives,
     `python3 scripts/ledger.py set-status --slug <slug> --status <status> --reason "..."`.
 
-Steps 5, 6, 9, and 10 are gates, not formalities: a failure there is a defect that
+Steps 5, 6, 9, and 11 are gates, not formalities: a failure there is a defect that
 would otherwise surface upstream as a rejection.
 
 ## Why the draft comes first

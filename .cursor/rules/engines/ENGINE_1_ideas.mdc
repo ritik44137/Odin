@@ -1,0 +1,62 @@
+---
+description: ENGINE_1 ideas -- qualify an Odyssey idea; refuse if no first-attempt trap
+alwaysApply: false
+---
+
+# ENGINE_1 -- Ideas
+
+Use when the user has a raw idea and has not yet scaffolded. Do not implement
+the bundle here. If the idea cannot name what a frontier model gets wrong on
+the first attempt, **stop**. If the remaining work is a ticket rather than a
+collection-scale system, **stop**. Horizon is decided here; traps are decided
+here. Do not discover either after the zip.
+
+Policy: `docs/odyssey-long-horizon.md` · `docs/odyssey-difficulty-design.md` ·
+`docs/odyssey-family-specific-guidance.md`
+
+## Batch checks (all must pass)
+
+| Check | The idea must say |
+|---|---|
+| Well-specified | What exists in `/app`, what to build, constraints, outputs |
+| Verifiable | Absolute paths, schemas, deterministic checks |
+| Interesting | Real engineering, not a prototype toy |
+| **Long-horizon** | Complete system in the declared family; honest expert remaining work **>= 40 hours**; 4-10h agent budget. Not a feature, repair, slice, or stubbed module |
+| **Difficult** | First-attempt trap, decoy or almost-correct algorithm, hidden channel that catches it |
+| Solvable | Offline, in-image, oracle can derive |
+| Outcome-verified | Artifacts the grader can measure |
+| Not recall | Not a textbook/interview exercise a model has seen thousands of times |
+
+## Required reply before scaffolding
+
+```text
+Engine: 1
+Family: <collectionFamily> / <taskFamily> / <verifierFamily>
+Slug candidate: <kebab>
+Remaining work (system, not ticket): <one paragraph naming subsystems>
+Honest expert hours: <number >= 40>
+Agent budget: <4-10h, not 7200s-on-a-ticket>
+First-attempt trap: <one paragraph>
+Almost-correct algorithm: <what the model will try>
+Hidden channel that catches it: <generated / invariant / other>
+Decoy plan: <none, because tight library> OR <file off the hot path>
+Probe risk if we shipped today: HIGH -- recall | MEDIUM -- one-file fix | LOW -- interacting
+Horizon risk if we shipped today: HIGH -- ticket | LOW -- collection-scale system
+Ready for ENGINE_3: yes/no
+```
+
+`Ready for ENGINE_3: no` if Long-horizon, Difficult, or Not-recall fails. Do
+not run `new_task.py` until yes.
+
+## Forbidden
+
+- "It is hard because it takes N hours" as the *trap* (hours are the horizon
+  bar; they do not replace a first-attempt trap)
+- "It is long-horizon because frontier models fail" (model trials do not
+  lengthen a ticket; the judge sees `/app`)
+- "Add more requirements" on a well-known algorithm
+- Padding `expertTimeEstimateHours` or `timeout_sec` on the same module
+  (a 32h merge library still failed this funnel as too short)
+- Starting ENGINE_3 to discover difficulty or horizon later
+- Ticket shapes: add/fix a feature in an existing parser; one product
+  workflow; repair an eval pipeline; implement a small greenfield module

@@ -18,6 +18,7 @@ A strong task is:
 - realistic as professional engineering work
 - genuinely novel, not a cosmetic re-skin
 - hard for frontier agents, but not impossible
+- collection-scale remaining work (complete system, not a ticket); frontier-model failure does not make a ticket long-horizon
 
 # Verification quality standard
 
@@ -28,6 +29,18 @@ Do not rely on a single assertion or one happy-path test. Verification should id
 - family-appropriate quality or performance metrics
 - hidden cases that prevent overfitting visible checks
 
+Hidden groups must hold the majority of the reward float. A visible-only
+patch that scores 0.70 looks saturated to the difficulty probe even if the
+binary gate fails. Visible is for aiming (~0.30). Decorative extra pytest on
+the same root cause does not add difficulty.
+
+# Difficulty is designed, not hoped for
+
+The probe has no local substitute. Design with interaction, decoys off the
+hot path, independent hidden traps, and an almost-correct trap. Run probes
+V/D/L/A before zip. `docs/odyssey-difficulty-design.md`. Heuristic gate:
+`scripts/check_difficulty_design.py`.
+
 # Visible and hidden verifier split
 
 The agent should have enough visibility to understand what success looks like, but not enough to game the decisive checks. Author verification with an explicit split:
@@ -36,6 +49,20 @@ The agent should have enough visibility to understand what success looks like, b
 - hidden held-out checks for real grading
 
 Document the split in `verificationStrategy`.
+
+# Verifier integrity
+
+End-to-end solution generation lives in `solution/` only. `tests/` may run the
+agent's binary or public API, parse output, use golden hashes, spec-derived
+invariants, sealed held-out truth, and perturbation re-runs. It may not contain
+a callable that maps inputs to the complete expected artifact. Rule of thumb:
+if deleting `solution/` still lets the test compute the expected answer, the
+test is doing the solving.
+
+Oracle and agent must face identical tests. No `EVAL_IS_ORACLE` branch. Always
+write `/logs/verifier/reward.txt` on failure as well as success.
+
+File-level catalog: `docs/odyssey-quality-guidelines.md`.
 
 # Anti-gaming design expectations
 
@@ -56,7 +83,7 @@ The verifier should directly counter these tactics. Structural countermeasures a
 - vary hidden inputs, ideally generating them, so memorizing the visible set does not generalize
 - check invariants over generated input as a channel separate from enumerated cases
 
-`scripts/scan_bundle_leaks.py` detects the mechanical failures of this design: a Dockerfile that copies `tests/` or `solution/`, a held-out file byte-identical to an agent-readable one, an instruction that quotes expected outputs, a verifier grading against a fixture inside `/app`, and a `tests/` directory with no held-out portion at all.
+`scripts/scan_bundle_leaks.py` detects the mechanical failures of this design: a Dockerfile that copies `tests/` or `solution/` or creates Harbor reserved paths, a held-out file byte-identical to an agent-readable one, an instruction that quotes expected outputs, a verifier grading against a fixture inside `/app`, AI scaffolding in `environment/`, runtime fetches in tests or solution, and a `tests/` directory with no held-out portion at all.
 
 # Prove the anti-gaming claim, do not assert it
 

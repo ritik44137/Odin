@@ -1,0 +1,60 @@
+---
+description: ENGINE_7 revise -- lane router; fairness vs harden; never bounce to easy
+alwaysApply: false
+---
+
+# ENGINE_7 -- Revise
+
+Command: `/revise-task`. Keep the slug. Follow
+`.cursor/commands/revise-task.md` **and** this lane table.
+
+## Lanes (order wins)
+
+| Lane | When | Do | Do not |
+|---|---|---|---|
+| **O** oracle | Oracle 0, solve.sh broken | Fix derive-path, Dockerfile, pins | Ease tests, ENGINE_8 |
+| **F** fairness | Unsolvable, hidden rules missing from `/app`, contradictory tests | Align docs and tests, oracle 1.0 | Instruction hints, drop hidden traps |
+| **H** too easy | Probe saturated, visible-only would pass, one-file fix | **ENGINE_8** | This lane does not "add tests" |
+| **R** reviewer | Solvable, comments only | FIX/IGNORE triage; bounce-risk first | Recipes, golden values, weakening hidden |
+| **C** category/family | Wrong family for the work | Honest relabel or real restructure of all layers | Label-only novelty |
+
+If Status is not solvable, **F beats R**. Do not produce an IGNORE table that
+leaves unfair 0% tests.
+
+## Outcome contract (LOCKED)
+
+After the revision the task must still be:
+
+- solvable (oracle 1.0)
+- floored (NOP at declared floor)
+- not one-shottable (probes V/D/L/A fail hidden)
+- recipe-free instruction
+
+Python-or-not does not change this. Odyssey has no `difficulty = "hard"`
+key to relabel. Prose in `difficultyExplanation` is not hardness.
+
+## Reviewer triage (lane R)
+
+Safe FIX: docs match tests, harness, Dockerfile, fair contract wording that
+does not give the recipe.
+
+Forbidden FIX: checklists, bug file names, golden answers, dropping hidden
+traps, visible weight raised so a shallow patch looks done.
+
+```text
+Trivial bounce risk: LOW|MEDIUM|HIGH -- <one fact>
+Fixed: ...
+Ignored: ... -- why: ...
+```
+
+HIGH -> do not zip. Prefer IGNORE on comments that would ease the probe.
+
+## Required reply
+
+```text
+Engine: 7
+Lane: O|F|H|R|C
+Bounce risk: LOW|MEDIUM|HIGH
+Outcome contract: solvable yes/no; probes still fail hidden yes/no
+Next: ENGINE_5 | ENGINE_8 | ENGINE_6
+```

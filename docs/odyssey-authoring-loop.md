@@ -9,9 +9,14 @@ inspection passes it, so there is no later point at which a mistake can be caugh
 
 ## Step 1: Normalize the idea and choose the slug
 
-Run the `create-task` workflow on a raw concept. It classifies the task honestly,
-sharpens the objective into a concrete deliverable, and derives a lowercase-kebab slug
-from the core engineering problem. The slug is chosen once and is then fixed.
+Run the `create-task` workflow (ENGINE_1 then ENGINE_3) on a raw concept.
+ENGINE_1 must name the first-attempt trap **and** collection-scale remaining
+work (complete system, >= 40 honest expert hours) before `new_task.py` runs.
+Ticket-sized ideas fail Automated Difficulty as too short even when models
+fail them. Then classify the task honestly, sharpen the objective into a
+concrete deliverable, and derive a lowercase-kebab slug from the core
+engineering problem. The slug is chosen once and is then fixed. Router:
+`.cursor/rules/09-engine-router.mdc`. Horizon: `docs/odyssey-long-horizon.md`.
 
 ## Step 2: Scaffold
 
@@ -68,15 +73,29 @@ measures, and how the draft's resources and network posture map into `task.toml`
 
 ## Step 8: Implement the bundle
 
-Build out `tasks/<slug>/`. Start from `examples/reference-bundle/`, which already
-demonstrates the required paths, the visible/hidden split, the scoring convention, and
-a Dockerfile that keeps `tests/` and `solution/` out of the image.
+Build out `tasks/<slug>/` in Harbor authoring order, documented in
+`docs/harbor-task-anatomy.md`:
+
+1. `instruction.md` -- requirements and absolute paths, no recipes
+2. `task.toml` -- families, resources, and network matching the draft
+3. `environment/` -- starting state plus a Dockerfile that copies only that state
+4. `solution/solve.sh` -- a command sequence that derives the answer in `/app`
+5. `tests/` -- visible group, then hidden groups, with a reward written on every exit
+
+Start from `examples/reference-bundle/`, which already demonstrates the required
+paths, the visible/hidden split, the scoring convention, and a Dockerfile that
+keeps `tests/` and `solution/` out of the image. Apply
+`docs/odyssey-quality-guidelines.md` as you write each file: the verifier must
+not contain the solver, the oracle must not echo goldens, and the image must not
+touch Harbor's reserved paths.
 
 ## Step 9: Revise against feedback
 
-Run the `revise-task` workflow. Keep the slug and revise in place. Apply the requested
-changes while preserving repo rules; when feedback would weaken verification or
-consistency, keep its intent and adjust the implementation.
+Run the `revise-task` workflow (ENGINE_7). Keep the slug and revise in
+place. Lane order: oracle, fairness, too-easy (ENGINE_8), reviewer. Apply
+the requested changes while preserving repo rules; when feedback would
+weaken verification or bounce the probe to easy, keep its intent and
+adjust the implementation.
 
 ## Step 10: Run every local gate
 
@@ -84,19 +103,23 @@ consistency, keep its intent and adjust the implementation.
 scripts/preflight.sh --slug <slug> --with-oracle
 ```
 
-This runs structure and consistency validation, the anti-gaming leak scan, the novelty
-check, and — with Docker available — the oracle and nop runs. The oracle and nop pair
-is the one to insist on: it is the most expensive stage to fail upstream and the most
-reproducible locally.
+This runs structure and consistency validation, the anti-gaming leak scan, the
+difficulty-design heuristic, the novelty check, and -- with Docker available --
+the oracle and nop runs. The oracle and nop pair is the one to insist on: it is
+the most expensive stage to fail upstream and the most reproducible locally.
+The difficulty probe itself cannot be run here; `check_difficulty_design.py`
+only catches shapes that almost always saturate.
 
 Expect a real gap between the two runs. An oracle that reaches full reward while the
 untouched state also scores well means the verifier is not measuring the work.
 
-## Step 11: Prove the anti-gaming claim
+## Step 11: Prove probes V/D/L/A
 
-Write the shallowest patch that satisfies every visible check, run the verifier against
-it, and confirm it earns partial credit and still fails. If it passes, the hidden split
-is decorative.
+Write the shallowest patch that satisfies every visible check, run the verifier
+against it, and confirm it earns partial credit and still fails (probe V). If
+decoys exist, patch only those (D). Patch one module or stage (L). Apply the
+plausible wrong algorithm (A). Hidden groups must still fail. Details:
+`docs/odyssey-difficulty-design.md`.
 
 ## Step 12: Verify everything, then package
 

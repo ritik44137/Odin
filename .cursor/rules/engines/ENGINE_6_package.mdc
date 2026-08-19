@@ -1,0 +1,38 @@
+---
+description: ENGINE_6 package -- only package_task.py writes the zip
+alwaysApply: false
+---
+
+# ENGINE_6 -- Package
+
+Command: `/package-task`. The only zip path.
+
+```bash
+python3 scripts/package_task.py --slug <slug> --with-oracle
+python3 scripts/ledger.py add --slug <slug>
+```
+
+`package_task.py` re-runs structure, leak scan, **difficulty design**,
+novelty, then (with `--with-oracle`) oracle/nop. It writes `zip/<slug>.zip`
+only if they pass, then re-validates the archive.
+
+Do not `zip -r`. Byte-identical resubmits are blocked.
+
+## Difficulty last look
+
+- `check_difficulty_design.py` had no ERROR (already a pack gate)
+- Warnings still listed in the reply; they are not a probe pass
+- Probes V/D/L/A were actually run
+- Instruction still has no recipe after last edits
+
+If ENGINE_8 is still needed, do not package.
+
+## Required reply
+
+```text
+Engine: 6
+package_task.py: PASS/FAIL (quote)
+zip: zip/<slug>.zip or not written
+Difficulty warnings left: ...
+Probes run: V/D/L/A yes/no
+```

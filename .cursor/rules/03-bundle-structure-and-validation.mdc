@@ -29,11 +29,16 @@ Must be valid TOML and declare the task through `[metadata]`, `[verifier]`, `[ag
 
 Must contain substantive instructions for the agent, not a placeholder. The
 text must be keyboard-ASCII only, matching the draft paste rule: no arrows,
-superscripts, or typographic dashes.
+superscripts, or typographic dashes. Write requirements with absolute
+`/app/...` paths; do not include recipes, detection guides, or golden values.
+Craft: `.cursor/rules/05-instruction-writing.mdc`.
 
 ## environment/Dockerfile
 
-Builds the runtime image and prepares `/app`. Dependencies should be baked into the image rather than fetched during sealed rollout unless the relevant phase explicitly permits that network use.
+Builds the runtime image and prepares `/app`. Copy only the starting state.
+Never copy `tests/` or `solution/`. Never `mkdir`/`COPY`/`chown` Harbor
+reserved paths: `/tests`, `/solution`, `/oracle`, `/logs/verifier`.
+Dependencies are baked in. Craft: `.cursor/rules/06-environment-and-docker.mdc`.
 
 ## tests/test.sh
 
@@ -46,15 +51,31 @@ can read the same value from stdout.
 
 ## solution/solve.sh
 
-This is the canonical reference-solution entrypoint. The oracle runs this exact file.
+This is the canonical reference-solution entrypoint. The oracle runs this exact
+file. It must derive the answer by editing `/app`, not echo held-out goldens.
+Craft: `.cursor/rules/07-oracle-verifier-and-quality.mdc`.
+
+Write the bundle in this order: instruction, `task.toml`, environment,
+`solve.sh`, tests (visible then hidden), then oracle/nop. Runtime model:
+`docs/harbor-task-anatomy.md`.
 
 # Network consistency rules
 
-- `[environment] network_mode` describes image build behavior, which is not gated: a build that fetches packages is normal.
-- `[agent] network_mode` governs rollout, the one phase the network policy governs, and must align with the draft's `networkRequirements`. `none` and `allowlist` are admitted; `open` is refused.
-- `[verifier] network_mode` governs grading. Prefer `none`, because sealed grading is what keeps a verdict deterministic.
-- If the draft argues internet access is required, `[agent] network_mode` must be explicitly set and must match the draft posture.
-- If the draft requests allowlisted hosts but the bundle seals rollout as `none`, the task is inconsistent and should be rejected locally before upload.
+- Image **build** is not gated: a Dockerfile that fetches packages is normal.
+  `run_oracle_nop.py` always allows a networked build.
+- `[environment] network_mode` is the Harbor **runtime baseline** when the
+  container starts, not docker-build networking. Harbor values are
+  `no-network`, `allowlist`, and `public`. The draft form says `none` /
+  `allowlist`; map `none` to `no-network`. `public` is open egress and is
+  refused for `[agent]`.
+- `[agent] network_mode` governs rollout, the phase the network policy
+  governs, and must align with the draft's `networkRequirements`.
+- `[verifier] network_mode` governs grading. Prefer `no-network`.
+- Keep all three phases on the same mode. A mismatch requires
+  `dynamic_network_policy` or Harbor rejects the task.
+- If the draft argues internet access is required, `[agent] network_mode`
+  must be explicit and must match. A rollout the file seals (`no-network`)
+  while the form asks for allowlist hosts is inconsistent.
 
 # Resource consistency rules
 
@@ -67,7 +88,7 @@ Validate at least these values across draft and bundle:
 - storage in MB
 - GPU count
 
-Also ensure the request does not exceed the trial sandbox: 8 CPUs, 65536 MB of memory, 40960 MB of storage. A request above the sandbox is rejected rather than run starved.
+Also ensure the request does not exceed the trial sandbox: 8 CPUs, 65536 MB of memory, 40960 MB of storage, and 37000s of agent timeout. A request above the sandbox is rejected rather than run starved.
 
 # Structure-stage mindset
 
@@ -88,6 +109,8 @@ The repository provides one tool per locally reproducible funnel stage, and each
 - `scripts/new_task.py` to scaffold the draft, plan, and task skeleton together
 - `scripts/validate_odyssey_task.py` for draft bounds, bundle structure, and draft/bundle consistency
 - `scripts/scan_bundle_leaks.py` for held-out material that leaked into the image or the instruction
+- `scripts/check_difficulty_design.py` for recipe instructions, visible-majority
+  scoring, and other shapes that saturate the difficulty probe
 - `scripts/run_oracle_nop.py` for the oracle and nop runs, which need Docker
 - `scripts/check_novelty.py` and `scripts/ledger.py` for duplicate detection
 - `scripts/preflight.sh` to run all of them in order
@@ -105,4 +128,4 @@ Both a flat ZIP and one nested under a single top-level directory are accepted, 
 
 Keep `tests/` and `solution/` out of the image. The Dockerfile should copy only the starting state into `/app`, so nothing the agent can read reveals the held-out cases or the reference fix.
 
-`examples/reference-bundle/` is a complete working bundle that satisfies every local gate. Prefer adapting it over assembling a bundle from scratch. Note that it is deliberately too easy to submit; copy its structure, not its difficulty.
+`examples/reference-bundle/` is a complete working bundle that satisfies every local gate. Prefer adapting it over assembling a bundle from scratch. Note that it is deliberately too easy and too short to submit; copy its plumbing, not its remaining-work surface. Collection bar: `docs/odyssey-long-horizon.md`.

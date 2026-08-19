@@ -18,3 +18,5 @@ venv/
 
 .DS_Store
 *.swp
+
+terminal-bench-reference/

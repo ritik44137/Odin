@@ -1,0 +1,79 @@
+---
+description: Harbor oracle and verifier craft -- derive not echo, reward always, QG, integrity
+alwaysApply: true
+---
+
+# Oracle, verifier, and file-level quality
+
+Harbor runs `solution/solve.sh` then `tests/test.sh` for the oracle, and
+`tests/test.sh` alone for NOP. Same image, same tests, same network as the
+agent. Details: `docs/harbor-task-anatomy.md` and
+`docs/odyssey-quality-guidelines.md`.
+
+## Authoring order inside the bundle
+
+After the draft and plan exist: instruction -> `task.toml` -> environment ->
+`solution/solve.sh` -> tests (visible, then hidden) -> oracle/nop ->
+shallow-patch proof. Do not write hidden tests before a working oracle.
+
+## Oracle (`solution/solve.sh`)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd /app
+# mutate /app by applying a patch or running real programs -- do not echo goldens
+```
+
+- Demonstrate the command sequence. Derive the artifact. A script that
+  `echo`s the hidden expected output is not a reference solution.
+- Deterministic: seed RNG, stable sort, no clocks, no network unless allowlisted.
+- Fail fast (`set -euo pipefail`). Shebang required.
+- Do not read or edit `tests/`. Do not fetch at runtime.
+- After this script exits, `tests/test.sh` must reach full reward (1.0).
+- Run author probes V/D/L/A before zip (`docs/odyssey-difficulty-design.md`).
+
+## Verifier (`tests/test.sh`)
+
+Harbor fails the trial unless `/logs/verifier/reward.txt` or `reward.json`
+exists after **every** exit, including failures. Use an `EXIT` trap. Also
+print `ODYSSEY_SCORE=<float>` for the local harness.
+
+- Visible group: mirrors `instruction.md`. The agent may aim at this. Weight it
+  as a **minority** of the float (aim ~0.30, never >= 0.50). The difficulty
+  probe sees the score; a visible-only patch at 0.70 looks saturated.
+- Hidden groups: held-out cases and invariants. A patch that satisfies only
+  the visible group must earn partial credit and still fail. Hidden must fail
+  for a different root cause than visible, still inside the `/app` contract.
+  Include a generated/property channel so enumerated cases cannot be memorized.
+- Grade behavior (CLI, public API, artifacts), never implementation tokens
+  in source (`assert "sorted(" in code`).
+- Locate the suite via `$0` or `TEST_DIR="${TEST_DIR:-/tests}"`. Do not
+  require a custom env var the harness might not set.
+- No package installs. No runtime HTTP. Bake verifier deps in the image.
+- Oracle and agent face identical tests. Ban `EVAL_IS_ORACLE`, `/oracle`
+  branches, and oracle-only chmod.
+- No flaky p50/p95/p99 wall-clock asserts. No "score >= 0.95 * oracle" bars.
+  Performance family tasks use a stable metric, not mimicry of `solve.sh`.
+
+## Verifier integrity
+
+If deleting `solution/` still lets `tests/` compute the complete expected
+artifact, the solver is in the wrong tree. Move that callable into
+`solution/`. Tests may use golden hashes, spec invariants, sealed held-out
+truth, and perturbation re-runs. If the instruction says "read this config",
+the verifier must `json.load` the same file rather than hard-code its values.
+
+## Oracle 1.0 / NOP floor
+
+`scripts/run_oracle_nop.py` is the local Harbor stand-in. Oracle must hit
+full reward. NOP must sit at the floor in `partialScoreStrategy` (often 0.0;
+optimization tasks may have a non-zero baseline -- pass `--nop-max`). A
+passing NOP means the verifier is wrong, not that the task is easy.
+
+## QG reminder
+
+QG1 no flaky latency; QG2 identical oracle/agent tests; QG4 no runtime fetch;
+QG5 no reserved dirs in the image; QG6 always write reward; QG7 default env
+vars; QG8 no near-oracle thresholds. Full table:
+`docs/odyssey-quality-guidelines.md`.

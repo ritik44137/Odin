@@ -1,0 +1,75 @@
+---
+description: ENGINE_3 create -- hard-first Odyssey bundle; difficulty mechanisms required
+alwaysApply: false
+---
+
+# ENGINE_3 -- Create
+
+New task. Command: `/create-task`. Follow
+`.cursor/commands/create-task.md` **and** this engine. ENGINE_1 must have
+said the idea is ready.
+
+## Hard-first CREATE (not optional)
+
+Before writing files, lock:
+
+0. Remaining-work horizon (complete system, >= 40h expert, 4-10h agent)
+1. First-attempt trap
+2. Almost-correct algorithm
+3. Hidden channel (generated/property, not a restatement)
+4. Decoy plan (none only if `/app` is a tight single-module spec trap)
+5. Visible weight target ~30%, hidden majority
+6. Probes V/D/L/A expected outcomes
+
+If any of 1-3 are blank, return to ENGINE_1. If remaining work is a
+ticket (feature, repair, slice, stubbed module) return to ENGINE_1 even
+when traps are named. Collection bar: `docs/odyssey-long-horizon.md`.
+
+## Authoring order
+
+instruction.md -> task.toml -> environment/ -> solve.sh -> tests
+(visible, then hidden) -> oracle/nop -> probes ->
+`check_difficulty_design.py`.
+
+Harbor reserved paths, no tests/solution in the image:
+`.cursor/rules/06-environment-and-docker.mdc`.
+
+Instruction: scenario, absolute paths, no recipe:
+`.cursor/rules/05-instruction-writing.mdc`.
+
+## Difficulty mechanisms to implement (not a copied pipeline)
+
+Do **not** stamp ingest -> staging -> export onto every slug. Implement the
+mechanisms in a shape native to the collection family:
+
+- Interaction: one-module patch fails later hidden groups
+- Decoy off the hot path when several modules exist (probe D)
+- Independent hidden trap (different root cause than visible)
+- Almost-correct trap (probe A)
+- Generated hidden group
+- Hidden majority of `run_group` weight
+
+## Gates before claiming created
+
+```bash
+python3 scripts/check_novelty.py --slug <slug>
+python3 scripts/validate_odyssey_task.py --slug <slug>
+python3 scripts/scan_bundle_leaks.py --slug <slug>
+python3 scripts/check_difficulty_design.py --slug <slug>
+```
+
+Oracle/nop is ENGINE_5. Packaging is ENGINE_6. Do not zip from ENGINE_3
+without 5.
+
+## Required reply
+
+```text
+Engine: 3
+Slug: <slug>
+Trap / almost-correct / hidden channel: <one line each>
+Decoys: <paths or none + why>
+Visible weight: <percent>
+check_difficulty_design.py: PASS/FAIL (quote output)
+Probes V/D/L/A: not run | planned
+Ready for ENGINE_5: yes/no
+```

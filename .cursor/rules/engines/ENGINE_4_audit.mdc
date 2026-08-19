@@ -1,0 +1,49 @@
+---
+description: ENGINE_4 audit -- pre-zip difficulty and anti-gaming review
+alwaysApply: false
+---
+
+# ENGINE_4 -- Audit
+
+Self-review before verify/package. Command: `/audit-task`. Does not write
+the zip.
+
+## Must run
+
+```bash
+python3 scripts/validate_odyssey_task.py --slug <slug>
+python3 scripts/scan_bundle_leaks.py --slug <slug>
+python3 scripts/check_difficulty_design.py --slug <slug>
+python3 scripts/check_novelty.py --slug <slug>
+```
+
+Quote real output. SKIPPED is unknown, not passing.
+
+## Difficulty audit table (fill every row)
+
+| Item | Verdict |
+|---|---|
+| Remaining work is a complete system (>= 40 expert hours) | PASS/FAIL |
+| Instruction is a scenario, not a recipe | PASS/FAIL |
+| Visible weight < 50% (aim ~30%) | PASS/FAIL |
+| Hidden failure mode != visible | PASS/FAIL |
+| Generated/property hidden channel | PASS/FAIL |
+| Decoy off hot path, or justified none | PASS/FAIL |
+| Probe V (visible-only) still fails hidden | PASS/FAIL / not run |
+| Probe D (decoy-only) still fails hidden | PASS/FAIL / N/A / not run |
+| Probe L (one layer) still fails later hidden | PASS/FAIL / not run |
+| Probe A (almost-correct) fails hidden | PASS/FAIL / not run |
+| Decorative hardening (extra fields/tests, same bugs) | absent/present |
+| `difficultyExplanation` names first-attempt trap | PASS/FAIL |
+
+Any FAIL or "not run" on V -> not ready. Decorative present -> ENGINE_8, not
+more pytest.
+
+## Required reply
+
+```text
+Engine: 4
+Table: (rows above)
+Blockers: ...
+Next engine: 5 | 8 | 7-F
+```

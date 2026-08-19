@@ -84,6 +84,7 @@ stage() {
 
 stage "structure and consistency" python3 scripts/validate_odyssey_task.py --draft "${DRAFT}" --bundle "${BUNDLE}"
 stage "anti-gaming leak scan" python3 scripts/scan_bundle_leaks.py "${BUNDLE}"
+stage "difficulty design" python3 scripts/check_difficulty_design.py --draft "${DRAFT}" "${BUNDLE}"
 stage "novelty" python3 scripts/check_novelty.py "${DRAFT}"
 
 if [ "${WITH_ORACLE}" -eq 1 ]; then
